@@ -1,0 +1,14 @@
+# Nix build results
+result
+result-*
+
+# Nix temporary files
+*.swp
+*~
+
+# Hardware configuration backup
+*.bak
+
+# Directory service files
+.DS_Store
+.directory
