@@ -28,13 +28,14 @@ with lib;
       grim
       slurp
       alacritty
-      dolphin
+      kdePackages.dolphin
       pavucontrol
     ];
 
+    # Prefer Hyprland portal for screen sharing/pipewire integration
     xdg.portal = {
       enable = true;
-      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      extraPortals = [ pkgs.xdg-desktop-portal-hyprland pkgs.xdg-desktop-portal-gtk ];
     };
   };
 }

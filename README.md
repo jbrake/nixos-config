@@ -6,7 +6,7 @@ A flexible, multi-user NixOS configuration system with easily switchable desktop
 
 - **Multi-host support** - Manage configurations for multiple machines from one repository
 - **Modular design** - Separated concerns for easy maintenance
-- **Multiple desktop environments** - Switch between Plasma, GNOME, Hyprland, XFCE, and Sway
+- **Multiple desktop environments** - Switch between Plasma, GNOME, Hyprland, XFCE, and Sway (one per boot)
 - **Flake-based** - Reproducible builds with pinned dependencies
 - **Framework laptop optimized** - Includes Framework 13 AMD hardware support
 - **Bleeding-edge options** - Get the latest packages when you want them
@@ -61,10 +61,9 @@ Use the included update script:
 This script will:
 - Detect which machine you're on
 - Pull latest changes from git
-- Optionally update packages to latest versions
-- Test the configuration
-- Apply changes with your confirmation
-- Offer to reboot if needed
+- Optionally update flake inputs
+- Build the target configuration (no changes yet)
+- Set it as the next boot target and reboot (recommended)
 
 ### Manual Updates from Remote
 
@@ -72,32 +71,39 @@ For Lanna or anyone else to get updates you've pushed:
 ```bash
 cd ~/nix-configs  # or wherever the repo is cloned
 git pull
-sudo nixos-rebuild switch --flake .#lanna-laptop
+# Safer: set next boot then reboot, avoids DM restarts
+sudo nixos-rebuild boot --flake .#lanna-laptop && sudo reboot
 ```
 
 ## Switching Desktop Environments (Jason's machine only)
 
-1. **Edit the desktop configuration:**
-   ```bash
-   vim hosts/jason-framework/desktop.nix
-   ```
+**NEW: Clean Desktop Switching!** 🎉
 
-2. **Set ONE desktop to `true`:**
-   ```nix
-   desktops = {
-     plasma.enable = true;       # KDE Plasma 6
-     gnome.enable = false;       # GNOME
-     hyprland.enable = false;    # Hyprland
-     xfce.enable = false;        # XFCE
-     sway.enable = false;        # Sway
-   };
-   ```
+The configuration now supports seamless desktop switching like Fedora Atomic variants (Bluefin/Bazzite).
 
-3. **Apply and reboot:**
-   ```bash
-   sudo nixos-rebuild switch --flake .#jason-framework
-   sudo reboot
-   ```
+### Easy Method (Recommended)
+```bash
+./switch-desktop.sh
+```
+
+This interactive script will:
+- Show available desktop options
+- Build the target configuration
+- Set it for next boot and reboot cleanly
+
+### Manual Method
+```bash
+# Set next boot target, then reboot (recommended)
+sudo nixos-rebuild boot --flake .#jason-framework-gnome && sudo reboot
+sudo nixos-rebuild boot --flake .#jason-framework-plasma && sudo reboot
+sudo nixos-rebuild boot --flake .#jason-framework-xfce && sudo reboot
+sudo nixos-rebuild boot --flake .#jason-framework-hyprland && sudo reboot
+sudo nixos-rebuild boot --flake .#jason-framework-sway && sudo reboot
+```
+
+**Why the reboot?** Each desktop environment has its own display manager and services. Rebooting avoids mid-session DM restarts (black screens) and keeps environments isolated.
+
+See `DESKTOP-SWITCHING.md` for detailed information.
 
 ## Getting Fresher Packages
 
@@ -149,7 +155,12 @@ nix-configs/
 ├── hosts/
 │   ├── jason-framework/               # Jason's Framework laptop
 │   │   ├── configuration.nix
-│   │   ├── desktop.nix                # Desktop switcher
+│   │   ├── desktops/                  # Per-DE entry points
+│   │   │   ├── gnome.nix
+│   │   │   ├── plasma.nix
+│   │   │   ├── xfce.nix
+│   │   │   ├── hyprland.nix
+│   │   │   └── sway.nix
 │   │   └── hardware-configuration.nix
 │   ├── lanna-laptop/                  # Lanna's laptop
 │   │   ├── configuration.nix
@@ -229,6 +240,12 @@ Since Lanna has less Linux experience, here are simple commands:
 git stash        # Save local changes
 git pull         # Get updates
 git stash pop    # Restore local changes
+```
+
+### `nix flake update` fails due to lockfile permissions
+If `flake.lock` is owned by root, `nix flake update` as your user will fail. Fix with:
+```bash
+sudo chown $USER:$(id -gn) flake.lock
 ```
 
 ### Wrong Hostname Detection

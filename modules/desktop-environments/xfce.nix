@@ -25,5 +25,11 @@ with lib;
       xfce.thunar-volman
       xfce.thunar-archive-plugin
     ];
+
+    # Use GTK portal for consistent dialogs/screen share
+    xdg.portal = {
+      enable = true;
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    };
   };
 }

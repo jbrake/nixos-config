@@ -17,6 +17,12 @@
 
   outputs = { self, nixpkgs, nixpkgs-master, nixpkgs-kde, nixos-hardware, ... }@inputs: 
   let
+    hwMods = nixos-hardware.nixosModules;
+    hardwareModule = if builtins.hasAttr "framework-amd-ai-300-series" hwMods
+      then hwMods.framework-amd-ai-300-series
+      else if builtins.hasAttr "framework-13-amd-ai-300-series" hwMods
+      then hwMods.framework-13-amd-ai-300-series
+      else throw "No matching Framework AMD AI 300 series hardware module found in nixos-hardware.";
     # Overlay to use master packages selectively
     overlay-master = final: prev: {
       # Example: use specific packages from master
@@ -37,7 +43,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          nixos-hardware.nixosModules.framework-13-amd-ai-300-series
+          hardwareModule
           ./hosts/jason-framework/configuration.nix
           {
             nixpkgs.overlays = [ overlay-master overlay-kde ];

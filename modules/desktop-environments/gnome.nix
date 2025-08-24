@@ -45,16 +45,21 @@ with lib;
     
     # Fix cursor and theme issues
     environment.variables = {
-      # Cursor configuration
+      # Cursor configuration - Force proper cursor theme
       XCURSOR_THEME = "Adwaita";
       XCURSOR_SIZE = "24";
       # GTK theme consistency
       GTK_THEME = "Adwaita:dark";
       # Fix Java applications
       _JAVA_AWT_WM_NONREPARENTING = "1";
-      # Better Wayland support
-      MOZ_ENABLE_WAYLAND = "1";
-      NIXOS_OZONE_WL = "1";
+      # Force cursor theme for all applications
+      CURSOR_THEME = "Adwaita";
+    };
+
+    # Additional cursor fixes
+    environment.sessionVariables = {
+      XCURSOR_THEME = "Adwaita";
+      XCURSOR_SIZE = "24";
     };
     
     # Essential GNOME packages
@@ -70,10 +75,9 @@ with lib;
       gnomeExtensions.blur-my-shell
       gnomeExtensions.just-perfection
       
-      # Themes and icons
+      # Themes and icons - GNOME native only to prevent conflicts
       adwaita-icon-theme
       gnome-themes-extra
-      papirus-icon-theme
       
       # GTK libraries
       gtk3
@@ -92,6 +96,12 @@ with lib;
       # Development tools that work well with GNOME
       vscode
     ];
+
+    # Prefer GNOME portal to avoid mixed behavior with other DEs
+    xdg.portal = {
+      enable = true;
+      extraPortals = [ pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-gtk ];
+    };
 
     # Remove unwanted GNOME applications
     environment.gnome.excludePackages = with pkgs; [
@@ -120,12 +130,18 @@ with lib;
             "variable-refresh-rate"      # VRR support
             "xwayland-native-scaling"    # Better XWayland scaling
           ];
+          # Additional scaling improvements
+          edge-tiling = true;
         };
         
-        # Interface preferences
+        # Interface preferences (force GNOME-native theming/cursors)
         "org/gnome/desktop/interface" = {
           enable-hot-corners = false;  # Disable hot corners by default
           show-battery-percentage = true;
+          cursor-theme = "Adwaita";
+          cursor-size = lib.gvariant.mkInt32 24;
+          icon-theme = "Adwaita";
+          color-scheme = "prefer-dark";  # Matches GTK_THEME above
         };
         
         # Window manager preferences
@@ -153,7 +169,7 @@ with lib;
     services.printing.enable = true;
     
     # Enable sound
-    hardware.pulseaudio.enable = false;  # Conflicts with pipewire
+    services.pulseaudio.enable = false;  # Conflicts with pipewire
     security.rtkit.enable = true;
     services.pipewire = {
       enable = true;

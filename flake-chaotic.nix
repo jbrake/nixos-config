@@ -9,14 +9,21 @@
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, chaotic, ... }@inputs: {
+  outputs = { self, nixpkgs, nixos-hardware, chaotic, ... }@inputs: let
+    hwMods = nixos-hardware.nixosModules;
+    hardwareModule = if builtins.hasAttr "framework-amd-ai-300-series" hwMods
+      then hwMods.framework-amd-ai-300-series
+      else if builtins.hasAttr "framework-13-amd-ai-300-series" hwMods
+      then hwMods.framework-13-amd-ai-300-series
+      else throw "No matching Framework AMD AI 300 series hardware module found in nixos-hardware.";
+  in {
     nixosConfigurations = {
       # Jason's Framework laptop with Chaotic packages
       jason-framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          nixos-hardware.nixosModules.framework-13-amd-ai-300-series
+          hardwareModule
           chaotic.nixosModules.default
           ./hosts/jason-framework/configuration.nix
           {

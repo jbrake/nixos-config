@@ -68,24 +68,20 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Test the configuration first
-print_status "Testing configuration..."
-sudo nixos-rebuild test --flake .#$FLAKE_TARGET || print_error "Configuration test failed!"
+print_status "Building configuration (no changes yet)..."
+if ! nix build ".#nixosConfigurations.${FLAKE_TARGET}.config.system.build.toplevel"; then
+    print_error "Build failed. Not applying changes."
+fi
 
-# Ask for confirmation before switching
-read -p "Configuration test successful. Apply changes permanently? (y/N) " -n 1 -r
+# Ask for confirmation before setting next boot
+read -p "Build successful. Set as next boot target and reboot now? (Y/n) " -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    print_status "Applying configuration..."
-    sudo nixos-rebuild switch --flake .#$FLAKE_TARGET
-    print_status "Configuration applied successfully!"
-    
-    # Ask about reboot for desktop environment changes
-    read -p "Reboot now? (recommended if you changed desktop environments) (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_status "Rebooting..."
-        sudo reboot
-    fi
+if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    print_status "Setting next boot target..."
+    sudo nixos-rebuild boot --flake .#$FLAKE_TARGET
+    print_status "Rebooting to new configuration..."
+    sudo reboot
 else
-    print_status "Configuration not applied. Run 'sudo nixos-rebuild switch --flake .#$FLAKE_TARGET' to apply later."
+    print_status "Not applied. To apply later, run:"
+    echo "  sudo nixos-rebuild boot --flake .#$FLAKE_TARGET && sudo reboot"
 fi

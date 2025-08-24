@@ -3,12 +3,6 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./desktop.nix
-    ../../modules/desktop-environments/plasma.nix
-    ../../modules/desktop-environments/gnome.nix
-    ../../modules/desktop-environments/hyprland.nix
-    ../../modules/desktop-environments/xfce.nix
-    ../../modules/desktop-environments/sway.nix
     ../../modules/system/core.nix
     ../../modules/users/jason.nix
   ];

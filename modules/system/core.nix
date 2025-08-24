@@ -79,4 +79,27 @@
     python3
     nodejs_20
   ];
+
+  # Global Wayland-friendly defaults for apps (Chromium/Brave/Firefox/VSCode)
+  environment.variables = {
+    NIXOS_OZONE_WL = "1";
+    MOZ_ENABLE_WAYLAND = "1";
+  };
+
+  # Safety net: ensure at most one desktop is enabled when multiple desktop modules are imported
+  assertions = let
+    flags = [
+      (if config ? desktops && config.desktops ? gnome then (config.desktops.gnome.enable or false) else false)
+      (if config ? desktops && config.desktops ? plasma then (config.desktops.plasma.enable or false) else false)
+      (if config ? desktops && config.desktops ? xfce then (config.desktops.xfce.enable or false) else false)
+      (if config ? desktops && config.desktops ? hyprland then (config.desktops.hyprland.enable or false) else false)
+      (if config ? desktops && config.desktops ? sway then (config.desktops.sway.enable or false) else false)
+    ];
+    enabledCount = builtins.length (builtins.filter (x: x) flags);
+  in [
+    {
+      assertion = enabledCount <= 1;
+      message = "Multiple desktop environments are enabled simultaneously. Enable exactly one of desktops.(gnome|plasma|xfce|hyprland|sway).enable.";
+    }
+  ];
 }
