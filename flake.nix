@@ -13,7 +13,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          nixos-hardware.nixosModules.framework-13-amd-ai-300-series
+          nixos-hardware.nixosModules.framework-amd-ai-300-series
           ./hosts/jason-framework/configuration.nix
         ];
       };
