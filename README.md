@@ -217,7 +217,8 @@ The KDE snapshot is deliberately narrow. It keeps:
 - Plasma panel layout
 - pinned launchers
 - CPU, memory, and thermal widgets
-- mouse/touchpad settings
+- mouse cursor settings
+- generic touchpad behavior from `services.libinput`
 - display scale/output config
 - basic KWin settings
 - Brave as the default browser
@@ -232,6 +233,7 @@ It intentionally does not keep:
 - browser profiles
 - generated GTK theme files
 - every random KDE config file
+- per-device touchpad IDs from `kcminputrc`
 
 Home Manager copies the KDE snapshot into writable config files once, using this marker:
 
