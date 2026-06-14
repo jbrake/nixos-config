@@ -148,8 +148,10 @@ plugin=org.kde.plasma.digitalclock
 [Containments][23][Applets][38][Configuration]
 popupHeight=451
 popupWidth=560
+showDate=true
 
 [Containments][23][Applets][38][Configuration][Appearance]
+showSeconds=0
 use24hFormat=2
 
 [Containments][23][Applets][38][Configuration][ConfigDialog]
