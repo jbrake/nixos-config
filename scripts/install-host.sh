@@ -28,6 +28,7 @@ host="$1"
 target_root="${2:-/mnt}"
 hardware_file="$repo_root/hosts/$host/hardware-configuration.nix"
 target_repo="$target_root/home/$target_user/Projects/nixos-config"
+flake_ref="path:$repo_root#$host"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run this from the NixOS installer as root." >&2
@@ -68,19 +69,11 @@ fi
 echo "Generating hardware configuration for $host from $target_root"
 nixos-generate-config --root "$target_root" --show-hardware-config > "$hardware_file"
 
-if command -v git >/dev/null 2>&1 && git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  git -C "$repo_root" add "$hardware_file"
-fi
-
 echo "Locking flake inputs"
-nix --extra-experimental-features "nix-command flakes" flake lock --flake "$repo_root"
+nix --extra-experimental-features "nix-command flakes" flake lock --flake "path:$repo_root"
 
-if command -v git >/dev/null 2>&1 && git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  git -C "$repo_root" add flake.lock
-fi
-
-echo "Installing NixOS flake: $repo_root#$host"
-nixos-install --root "$target_root" --flake "$repo_root#$host" --no-root-passwd
+echo "Installing NixOS flake: $flake_ref"
+nixos-install --root "$target_root" --flake "$flake_ref" --no-root-passwd
 
 echo "Copying generated repo to $target_repo"
 mkdir -p "$(dirname -- "$target_repo")"
