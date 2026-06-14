@@ -10,6 +10,7 @@ if [[ -z "$default_host" || ! -d "$repo_root/hosts/$default_host" ]]; then
 fi
 
 host="${1:-$default_host}"
+flake_ref="path:$repo_root#$host"
 
 if [[ ! -d "$repo_root/hosts/$host" ]]; then
   echo "Unknown host: $host" >&2
@@ -18,5 +19,5 @@ if [[ ! -d "$repo_root/hosts/$host" ]]; then
   exit 1
 fi
 
-echo "Running: sudo nixos-rebuild switch --flake $repo_root#$host"
-sudo nixos-rebuild switch --flake "$repo_root#$host"
+echo "Running: sudo nixos-rebuild switch --flake $flake_ref"
+sudo nixos-rebuild switch --flake "$flake_ref"

@@ -6,7 +6,7 @@ This repo is intentionally small. It is not trying to capture every detail from 
 
 ## Quick Mental Model
 
-NixOS is configured from text files, then rebuilt.
+NixOS is configured from text files, then rebuilt. The Nix files are the source of truth; scripts in this repo are only optional wrappers around standard Nix commands.
 
 - `flake.nix` is the entry point. It defines the available machines.
 - `modules/nixos/base.nix` is shared system setup: user, networking, firmware, Bluetooth, Flatpak, small CLI tools.
@@ -17,7 +17,13 @@ NixOS is configured from text files, then rebuilt.
 - `home/jason/home.nix` is user-level setup.
 - `home/jason/kde/` is the small KDE snapshot.
 
-Normal day-to-day command after editing config. The script uses the current system hostname when it matches a host in this repo:
+Normal day-to-day command after editing config:
+
+```bash
+sudo nixos-rebuild switch --flake .#$(hostname)
+```
+
+Optional wrapper. It uses the current system hostname when it matches a host in this repo:
 
 ```bash
 ./scripts/rebuild.sh
@@ -45,7 +51,7 @@ Boot the NixOS graphical installer or minimal ISO.
 3. Mount the new system at `/mnt`.
 4. Mount the EFI partition at `/mnt/boot`.
 5. Clone this repo.
-6. Run the install script for the right host.
+6. Run the install commands for the right host.
 7. Reboot.
 8. Change the temporary password.
 
@@ -54,6 +60,25 @@ Example after partitioning and mounting:
 ```bash
 git clone <YOUR_REPO_URL> nixos-config
 cd nixos-config
+host=framework-amd-ai-300
+nix --extra-experimental-features "nix-command flakes" flake lock --flake "path:$PWD"
+sudo nixos-generate-config --root /mnt --show-hardware-config > "hosts/$host/hardware-configuration.nix"
+sudo nixos-install --root /mnt --flake "path:$PWD#$host" --no-root-passwd
+sudo mkdir -p /mnt/home/jason/Projects
+sudo cp -a . /mnt/home/jason/Projects/nixos-config
+sudo chown 1000:100 /mnt/home/jason /mnt/home/jason/Projects
+sudo chown -R 1000:100 /mnt/home/jason/Projects/nixos-config
+```
+
+For the future Intel laptop, run the same commands with this host value:
+
+```bash
+host=framework-intel-core-ultra
+```
+
+If you prefer the helper script, it runs those same bootstrap steps:
+
+```bash
 sudo ./scripts/install-host.sh framework-amd-ai-300
 ```
 
@@ -63,7 +88,7 @@ For the future Intel laptop:
 sudo ./scripts/install-host.sh framework-intel-core-ultra
 ```
 
-The install script does four important things:
+Those bootstrap steps do four important things:
 
 1. Generates `hosts/<host>/hardware-configuration.nix` from the mounted system.
 2. Creates `flake.lock` so the exact inputs used for install are pinned.
@@ -120,13 +145,14 @@ git clone <YOUR_REPO_URL> ~/Projects/nixos-config
 Apply system changes:
 
 ```bash
-./scripts/rebuild.sh
+sudo nixos-rebuild switch --flake .#$(hostname)
 ```
 
 Update package inputs:
 
 ```bash
-./scripts/update-system.sh
+nix flake update
+sudo nixos-rebuild switch --flake .#$(hostname)
 ```
 
 Check the current host config without switching:
@@ -342,6 +368,13 @@ nix flake lock
 ```
 
 It is updated by `./scripts/update-system.sh`.
+
+Without the helper script:
+
+```bash
+nix flake update
+sudo nixos-rebuild switch --flake .#$(hostname)
+```
 
 ## Git Flow
 
