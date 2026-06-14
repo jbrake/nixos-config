@@ -3,7 +3,14 @@
 {
   services.xserver.enable = true;
   services.xserver.xkb.layout = "us";
-  services.libinput.enable = true;
+  services.libinput = {
+    enable = true;
+    touchpad = {
+      tapping = false;
+      naturalScrolling = true;
+      disableWhileTyping = false;
+    };
+  };
 
   services.displayManager.sddm = {
     enable = true;
