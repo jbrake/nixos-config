@@ -6,9 +6,16 @@
   services.libinput = {
     enable = true;
     touchpad = {
+      accelProfile = "adaptive";
+      accelSpeed = "0";
+      clickMethod = "clickfinger";
+      disableWhileTyping = false;
+      leftHanded = false;
+      middleEmulation = false;
+      scrollMethod = "twofinger";
       tapping = false;
       naturalScrolling = true;
-      disableWhileTyping = false;
+      sendEventsMode = "enabled";
     };
   };
 

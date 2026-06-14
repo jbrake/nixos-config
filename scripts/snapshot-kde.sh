@@ -7,7 +7,6 @@ config_dst="$repo_root/home/jason/kde/config"
 data_dst="$repo_root/home/jason/kde/data"
 
 config_files=(
-  kcminputrc
   kdeglobals
   kwinoutputconfig.json
   kwinrc
@@ -26,6 +25,15 @@ for item in "${config_files[@]}"; do
     cp -a "$src" "$dst"
   fi
 done
+
+kcminput_src="$HOME/.config/kcminputrc"
+kcminput_dst="$config_dst/kcminputrc"
+if [[ -e "$kcminput_src" ]]; then
+  awk '
+    /^\[/ { in_mouse = ($0 == "[Mouse]") }
+    in_mouse { print }
+  ' "$kcminput_src" > "$kcminput_dst"
+fi
 
 thermal_src="$HOME/.local/share/plasma/plasmoids/org.kde.olib.thermalmonitor"
 if [[ -d "$thermal_src" ]]; then
