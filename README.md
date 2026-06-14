@@ -11,6 +11,7 @@ NixOS is configured from text files, then rebuilt.
 - `flake.nix` is the entry point. It defines the available machines.
 - `modules/nixos/base.nix` is shared system setup: user, networking, firmware, Bluetooth, Flatpak, small CLI tools.
 - `modules/nixos/desktop-plasma.nix` is the desktop setup: Plasma, audio, graphics, fonts, Steam, and normal desktop apps.
+- `modules/nixos/fingerprint.nix` enables the Framework fingerprint reader through fprintd and PAM.
 - `hosts/<host>/configuration.nix` is per-laptop setup.
 - `hosts/<host>/hardware-configuration.nix` is generated during install for the exact disk/filesystem hardware.
 - `home/jason/home.nix` is user-level setup.
@@ -80,6 +81,12 @@ Then immediately run:
 passwd
 ```
 
+Set up the fingerprint reader:
+
+```bash
+fprintd-enroll jason
+```
+
 ## After Install
 
 Clone the repo somewhere convenient, usually:
@@ -115,6 +122,46 @@ sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 ```
 
 NixOS also keeps older generations in the boot menu, so a bad rebuild is usually recoverable by rebooting into the previous generation.
+
+## Fingerprint Reader
+
+The repo enables fprintd and wires it into the important PAM services:
+
+- normal login, which SDDM also uses
+- `sudo`
+- polkit prompts from KDE system settings and admin actions
+- Plasma lock screen through KDE's dedicated `kde-fingerprint` PAM service
+
+After a fresh install, enroll your finger:
+
+```bash
+fprintd-enroll jason
+```
+
+Useful checks:
+
+```bash
+fprintd-list jason
+fprintd-verify jason
+systemctl status fprintd.service
+```
+
+`fprintd.service` is D-Bus activated, so it can show as inactive until login, `sudo`, or a check command uses the reader.
+
+To delete enrolled prints and start over:
+
+```bash
+fprintd-delete jason
+fprintd-enroll jason
+```
+
+Fingerprints are stored locally under `/var/lib/fprint`. Do not copy that into this repo; enroll again on each laptop.
+
+Password auth remains available as the fallback. If fingerprint prompts for `sudo` get annoying, set this in `modules/nixos/fingerprint.nix`:
+
+```nix
+security.pam.services.sudo.fprintAuth = false;
+```
 
 ## KDE Snapshot
 
@@ -228,6 +275,12 @@ Change installed desktop apps:
 
 ```text
 modules/nixos/desktop-plasma.nix
+```
+
+Change fingerprint login/sudo/polkit behavior:
+
+```text
+modules/nixos/fingerprint.nix
 ```
 
 Change user shell/git/dev tools:
