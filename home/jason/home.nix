@@ -35,7 +35,6 @@
 
   home.packages = with pkgs; [
     nodejs
-    npm
     python3
     unrar
     uv

@@ -233,7 +233,3 @@ lastScreen=0
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
-
-[ScreenMapping]
-itemsOnDisabledScreens=
-screenMapping=desktop:/brave-dkecegnaldbiaeompiedddfcianpnafi-Default.desktop,0,2177e1a7-e953-4ce9-b886-15f22f6d0ca0
