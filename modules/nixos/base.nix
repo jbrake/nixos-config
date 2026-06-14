@@ -30,7 +30,10 @@
 
   users.users.${username} = {
     isNormalUser = true;
+    uid = 1000;
     description = "Jason Brake";
+    home = "/home/${username}";
+    createHome = true;
     extraGroups = [
       "wheel"
       "networkmanager"

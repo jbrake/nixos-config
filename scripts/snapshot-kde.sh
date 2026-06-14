@@ -8,6 +8,7 @@ data_dst="$repo_root/home/jason/kde/data"
 
 config_files=(
   kcminputrc
+  kdeglobals
   kwinoutputconfig.json
   kwinrc
   mimeapps.list
