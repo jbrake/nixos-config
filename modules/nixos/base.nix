@@ -84,7 +84,6 @@
     git
     glances
     gobuster
-    home-manager
     jq
     micro
     nano
