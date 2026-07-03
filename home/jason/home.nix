@@ -36,6 +36,8 @@
   xdg.configFile."alacritty/alacritty.toml".source = ./alacritty/alacritty.toml;
 
   home.packages = with pkgs; [
+    claude-code
+    codex
     nodejs
     python3
     unrar

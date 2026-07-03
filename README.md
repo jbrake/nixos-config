@@ -314,6 +314,7 @@ Desktop apps:
 
 User/dev tools:
 
+- claude-code and codex CLIs
 - Node.js, including npm
 - Python 3
 - uv
@@ -331,9 +332,6 @@ System basics:
 - nmap, gobuster, whois, dig
 - SSH client
 - USB/PCI inspection tools
-
-Not managed by this repo (reinstall by hand): `claude` and `codex` CLIs in
-`~/.local/bin` (npm / uv installs).
 
 ## What To Edit Most Often
 
