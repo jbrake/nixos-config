@@ -20,7 +20,7 @@ plugin=org.kde.plasma.kickoff
 
 [Containments][23][Applets][24][Configuration]
 popupHeight=596
-popupWidth=647
+popupWidth=681
 
 [Containments][23][Applets][24][Configuration][ConfigDialog]
 DialogHeight=540
@@ -28,7 +28,7 @@ DialogWidth=720
 
 [Containments][23][Applets][24][Configuration][General]
 favoritesPortedToKAstats=true
-icon=start-here-kde
+icon=nix-snowflake-white
 systemFavorites=suspend\\,hibernate\\,reboot\\,shutdown
 
 [Containments][23][Applets][24][Configuration][Shortcuts]
@@ -60,8 +60,8 @@ immutability=1
 lastScreen=0
 location=4
 plugin=org.kde.plasma.systemtray
-popupHeight=432
-popupWidth=432
+popupHeight=439
+popupWidth=440
 wallpaperplugin=org.kde.image
 
 [Containments][23][Applets][28][Applets][29]
@@ -146,12 +146,10 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][23][Applets][38][Configuration]
-popupHeight=451
+popupHeight=458
 popupWidth=560
-showDate=true
 
 [Containments][23][Applets][38][Configuration][Appearance]
-showSeconds=0
 use24hFormat=2
 
 [Containments][23][Applets][38][Configuration][ConfigDialog]
@@ -209,8 +207,8 @@ immutability=1
 plugin=org.kde.olib.thermalmonitor
 
 [Containments][23][Applets][48][Configuration]
-popupHeight=181
-popupWidth=288
+popupHeight=188
+popupWidth=296
 
 [Containments][23][Applets][48][Configuration][Behavior]
 temperatureUnit=fahrenheit
@@ -225,6 +223,9 @@ sensors=[{"name":"CPU","sensorId":"cpu/all/averageTemperature"},{"name":"GPU","s
 [Containments][23][General]
 AppletOrder=24;25;26;45;47;48;27;28;38;39
 
+[Containments][4][Wallpaper][org.kde.image][General]
+SlidePaths=/usr/share/wallpapers/
+
 [Containments][43]
 ItemGeometries-1694x1129=
 ItemGeometriesHorizontal=
@@ -235,3 +236,16 @@ lastScreen=0
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
+
+[Containments][49]
+activityId=2177e1a7-e953-4ce9-b886-15f22f6d0ca0
+formfactor=0
+immutability=1
+lastScreen=1
+location=0
+plugin=org.kde.plasma.folder
+wallpaperplugin=org.kde.image
+
+[ScreenMapping]
+itemsOnDisabledScreens=
+screenMapping=

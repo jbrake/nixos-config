@@ -58,6 +58,13 @@
 
   services.fwupd.enable = true;
   services.fstrim.enable = true;
+
+  # mDNS discovery (network printers, KDE Connect hosts, .local names)
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
   services.flatpak.enable = true;
@@ -71,20 +78,30 @@
   environment.systemPackages = with pkgs; [
     btop
     curl
+    dnsutils
+    duf
     fastfetch
     git
+    glances
+    gobuster
     home-manager
     jq
+    micro
     nano
+    nmap
     openssh
     pciutils
+    pv
     ripgrep
     rsync
     unzip
     usbutils
     vim
     wget
+    whois
   ];
 
-  system.stateVersion = "25.11";
+  # Matches the release current at first install (never installed under 25.11).
+  # Do not change after installing.
+  system.stateVersion = "26.05";
 }

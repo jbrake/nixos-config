@@ -173,12 +173,14 @@ NixOS also keeps older generations in the boot menu, so a bad rebuild is usually
 
 ## Fingerprint Reader
 
-The repo enables fprintd and wires it into the important PAM services:
+The repo enables fprintd, but fingerprint auth in PAM is **sudo-only** on purpose:
 
-- normal login, which SDDM also uses
-- `sudo`
-- polkit prompts from KDE system settings and admin actions
-- Plasma lock screen through KDE's dedicated `kde-fingerprint` PAM service
+- `sudo`: scan a finger, or just type the password — either works.
+- Login, SDDM, and polkit dialogs: password only. PAM runs modules in
+  sequence, so putting fingerprint there makes the password prompt hang for
+  30+ seconds waiting for a scan (this was learned the hard way on CachyOS).
+- Plasma lock screen: fingerprint still works. kscreenlocker talks to fprintd
+  natively over D-Bus in parallel with the password prompt, no PAM needed.
 
 After a fresh install, enroll your finger:
 
@@ -219,7 +221,11 @@ The KDE snapshot is deliberately narrow. It keeps:
 - pinned launchers
 - CPU, memory, and thermal widgets
 - mouse cursor settings
-- generic touchpad behavior from `services.libinput`
+- touchpad behavior via the per-device `[Libinput]` sections in `kcminputrc`
+  (this is what KWin actually reads on Wayland; `services.libinput` only
+  affects X11). The sections are keyed to the exact touchpad model, so a new
+  machine ignores them — set touchpad prefs once in System Settings there,
+  then run `./scripts/snapshot-kde.sh` to capture its section too.
 - display scale/output config
 - basic KWin settings
 - Brave as the default browser
@@ -234,7 +240,6 @@ It intentionally does not keep:
 - browser profiles
 - generated GTK theme files
 - every random KDE config file
-- per-device touchpad IDs from `kcminputrc`
 
 Home Manager copies the KDE snapshot into writable config files once, using this marker:
 
@@ -292,14 +297,20 @@ If a package name is wrong, the rebuild will fail before changing the running sy
 Desktop apps:
 
 - Alacritty
+- Bottles
 - Brave
+- Calibre
 - Discord
+- Firefox
+- Haruna
+- Meld
 - PrismLauncher
+- Proton VPN
 - qBittorrent
 - Steam
 - Telegram
 - VLC
-- KDE basics: Dolphin, Konsole, Kate, Gwenview, Spectacle, Ark, KCalc, Plasma System Monitor
+- KDE basics: Dolphin, Konsole, Kate, Gwenview, Spectacle, Ark, KCalc, Filelight, KWalletManager, Plasma System Monitor
 
 User/dev tools:
 
@@ -314,10 +325,15 @@ System basics:
 - curl/wget
 - ripgrep
 - rsync
-- btop
+- btop, glances, duf, pv
 - fastfetch
+- micro, nano, vim
+- nmap, gobuster, whois, dig
 - SSH client
 - USB/PCI inspection tools
+
+Not managed by this repo (reinstall by hand): `claude` and `codex` CLIs in
+`~/.local/bin` (npm / uv installs).
 
 ## What To Edit Most Often
 
@@ -411,6 +427,9 @@ If packages are old or missing after a while:
 
 ## Notes
 
-- This repo currently targets NixOS `25.11` and Home Manager `25.11` for predictable stable behavior.
-- `flake.lock` is not present yet because `nix` is not installed on this machine. The install script will create it on the NixOS installer. You can also create or refresh it later with `nix flake lock` or `nix flake update`.
+- This repo targets `nixos-unstable`: it matches the Plasma 6.7 already in
+  use and carries the freshest kernel/firmware for the Panther Lake 13 Pro.
+  `flake.lock` pins the exact revision, so rebuilds are reproducible; a bad
+  `nix flake update` is undone by rebooting into the previous generation. If
+  unstable ever gets tiresome, repoint `nixpkgs` at `nixos-26.05`.
 - The first-login password is intentionally temporary. Change it immediately with `passwd`.

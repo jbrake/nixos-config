@@ -26,12 +26,17 @@ for item in "${config_files[@]}"; do
   fi
 done
 
+# Keep [Mouse] and the per-device [Libinput][...] sections. On Wayland, KWin
+# reads touchpad settings from these kcminputrc sections — services.libinput
+# in NixOS only affects X11. The sections are keyed to a specific device
+# (vendor/product/name), so a machine with a different touchpad ignores them;
+# add a new machine's section by re-running this script there.
 kcminput_src="$HOME/.config/kcminputrc"
 kcminput_dst="$config_dst/kcminputrc"
 if [[ -e "$kcminput_src" ]]; then
   awk '
-    /^\[/ { in_mouse = ($0 == "[Mouse]") }
-    in_mouse { print }
+    /^\[/ { keep = ($0 == "[Mouse]" || $0 ~ /^\[Libinput\]/) }
+    keep { print }
   ' "$kcminput_src" > "$kcminput_dst"
 fi
 

@@ -2,10 +2,14 @@
   description = "Jason's NixOS laptop configurations";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    # nixos-unstable: matches the Plasma 6.7 currently in use, and carries the
+    # freshest kernel/firmware for the Panther Lake 13 Pro arriving Aug 2026.
+    # flake.lock pins the exact revision; roll back from the boot menu if an
+    # update misbehaves. Fallback if unstable gets too spicy: nixos-26.05.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

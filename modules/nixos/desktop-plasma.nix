@@ -72,11 +72,17 @@
   environment.systemPackages =
     (with pkgs; [
       alacritty
+      bottles
       brave
+      calibre
       capitaine-cursors
       discord
+      firefox
+      haruna
+      meld
       pavucontrol
       prismlauncher
+      protonvpn-gui
       qbittorrent
       telegram-desktop
       vlc
@@ -85,12 +91,14 @@
       ark
       breeze-gtk
       dolphin
+      filelight
       gwenview
       kate
       kcalc
       kdeconnect-kde
       kio-admin
       konsole
+      kwalletmanager
       plasma-browser-integration
       plasma-systemmonitor
       spectacle
