@@ -17,8 +17,10 @@
 
   programs.git = {
     enable = true;
-    userName = "Jason Brake";
-    userEmail = "pnut001@gmail.com";
+    settings.user = {
+      name = "Jason Brake";
+      email = "pnut001@gmail.com";
+    };
   };
 
   programs.fish = {
