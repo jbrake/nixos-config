@@ -68,17 +68,5 @@
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
         };
       };
-
-      homeConfigurations.${username} = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
-        extraSpecialArgs = {
-          inherit inputs username;
-          hostname = "standalone";
-        };
-        modules = [ ./home/jason/home.nix ];
-      };
     };
 }
