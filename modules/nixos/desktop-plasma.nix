@@ -3,21 +3,10 @@
 {
   services.xserver.enable = true;
   services.xserver.xkb.layout = "us";
-  services.libinput = {
-    enable = true;
-    touchpad = {
-      accelProfile = "adaptive";
-      accelSpeed = "0";
-      clickMethod = "clickfinger";
-      disableWhileTyping = false;
-      leftHanded = false;
-      middleEmulation = false;
-      scrollMethod = "twofinger";
-      tapping = false;
-      naturalScrolling = true;
-      sendEventsMode = "enabled";
-    };
-  };
+  # Touchpad, panel, theme, and other desktop look-and-feel are set by hand
+  # in System Settings (see README "First login"). KWin on Wayland keeps them
+  # in its own config files; NixOS has no native options for them and this
+  # repo stays out of that business on purpose.
 
   services.displayManager.sddm = {
     enable = true;
