@@ -54,7 +54,8 @@
 
   fonts = {
     packages = with pkgs; [
-      awesome-terminal-fonts
+      # glyph fallback for prompts/TUIs (awesome-terminal-fonts is gone from nixpkgs)
+      nerd-fonts.symbols-only
       dejavu_fonts
       liberation_ttf
       noto-fonts
@@ -82,7 +83,7 @@
       meld
       pavucontrol
       prismlauncher
-      protonvpn-gui
+      proton-vpn
       qbittorrent
       telegram-desktop
       vlc
