@@ -167,6 +167,34 @@ than 14 days). To free space manually right now:
 sudo nix-collect-garbage --delete-older-than 14d
 ```
 
+## Trying other desktops
+
+Adding a DE to test-drive is one line in `modules/nixos/desktop-plasma.nix`,
+next to the plasma6 one:
+
+```nix
+services.desktopManager.gnome.enable = true;   # or cosmic, cinnamon, xfce...
+```
+
+Rebuild; the SDDM session menu now offers both. To remove: delete the line,
+rebuild — it's fully gone, no leftovers. If an experiment breaks anything,
+boot the previous generation.
+
+**But**: every DE still scribbles on `$HOME` (GTK/cursor themes,
+`mimeapps.list` default apps), and NixOS can't referee that. So don't try
+new DEs from your real account — declare a throwaway user:
+
+```nix
+users.users.detest = {
+  isNormalUser = true;
+  initialPassword = "detest";
+};
+```
+
+Log into the new DE as `detest`; your own configs never get touched. Done
+experimenting: remove both config bits, rebuild, `sudo rm -rf /home/detest`.
+Zero residue.
+
 ## Fingerprint: why sudo-only
 
 PAM runs modules in sequence, so putting fingerprint in login/SDDM/polkit
