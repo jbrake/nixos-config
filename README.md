@@ -114,23 +114,58 @@ Edit config, then apply (a failed build never touches the running system):
 sudo nixos-rebuild switch --flake ~/Projects/nixos-config
 ```
 
-Update everything (do it when you feel like it — daily is fine):
-
-```bash
-cd ~/Projects/nixos-config
-nix flake update && sudo nixos-rebuild switch --flake .
-git commit -am "Update flake inputs" && git push
-```
-
-Something broke after an update? Reboot, pick the previous generation in the
-boot menu, then `git checkout flake.lock` to stay on the old versions.
-
 Add an app: put it in `environment.systemPackages` in
 `modules/nixos/desktop-plasma.nix` (GUI) or `modules/nixos/base.nix` (CLI),
 rebuild. Search names at <https://search.nixos.org/packages>.
 
-`scripts/rebuild.sh` and `scripts/update-system.sh` are the same commands
-with a wrong-host guard. Use them or don't.
+## Updating everything
+
+There is no `pacman -Syu` equivalent that mutates packages in place. Instead,
+`flake.lock` pins the exact nixpkgs revision the whole system builds from.
+Updating = move that pin to the latest nixos-unstable, rebuild, reboot-free:
+
+```bash
+cd ~/Projects/nixos-config
+nix flake update                          # 1. move the pin (updates flake.lock)
+sudo nixos-rebuild switch --flake .       # 2. rebuild + activate everything
+git commit -am "Update flake inputs" && git push   # 3. record what you're running
+```
+
+That updates every package, the kernel (active after next reboot), Plasma,
+drivers — the entire system, atomically. Do it when you feel like it; daily
+is fine, weekly is fine, before installing something new is a good habit.
+
+Or the same thing as one command:
+
+```bash
+./scripts/update-system.sh
+```
+
+**Firmware** is separate from nixpkgs (Framework ships BIOS/fingerprint/etc.
+updates through LVFS; fwupd is already enabled):
+
+```bash
+fwupdmgr refresh && fwupdmgr update
+```
+
+**Flatpaks** (if you've installed any) update independently too:
+
+```bash
+flatpak update
+```
+
+**If an update breaks something:** reboot and pick the previous generation
+in the boot menu — that's the whole system exactly as it was. Then
+`git checkout flake.lock` in the repo to stay on the old versions until
+you feel like retrying.
+
+**Cleanup:** old generations accumulate in the boot menu and on disk. A
+weekly garbage collection is already configured (deletes generations older
+than 14 days). To free space manually right now:
+
+```bash
+sudo nix-collect-garbage --delete-older-than 14d
+```
 
 ## Fingerprint: why sudo-only
 
