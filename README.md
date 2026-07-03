@@ -31,28 +31,38 @@ Everything is wiped. Back up first: `~/.ssh`, `~/Documents`, `~/.claude`,
 `~/.config/BraveSoftware`, `~/.local/share/TelegramDesktop`, Calibre library,
 PrismLauncher instances.
 
-**1. Boot the NixOS ISO** (graphical or minimal, either works) from USB.
-Keep a second USB with another distro as an escape hatch.
+**1. Boot the NixOS graphical ISO** from USB. Keep a second USB with another
+distro as an escape hatch.
 
-**2. Connect Wi-Fi** (NetworkManager applet on the graphical ISO, `nmtui` on minimal).
+**2. Run the installer** (Calamares). Choose: erase disk, no encryption,
+Plasma desktop, no swap (the config uses zram). Create user `jason` with
+your real password — it carries over. Reboot into the fresh desktop.
 
-**3. Partition and mount.** Example for a blank NVMe disk — 1 GB EFI + the
-rest ext4, no encryption, no disk swap (the config uses zram):
+**3. Adopt this config.** Connect Wi-Fi, open Konsole:
 
 ```bash
-sudo -i
-parted /dev/nvme0n1 -- mklabel gpt
-parted /dev/nvme0n1 -- mkpart ESP fat32 1MB 1GB
-parted /dev/nvme0n1 -- set 1 esp on
-parted /dev/nvme0n1 -- mkpart root ext4 1GB 100%
-mkfs.fat -F32 -n BOOT /dev/nvme0n1p1
-mkfs.ext4 -L nixos /dev/nvme0n1p2
-mount /dev/disk/by-label/nixos /mnt
-mkdir -p /mnt/boot
-mount /dev/disk/by-label/BOOT /mnt/boot
+mkdir -p ~/Projects && cd ~/Projects
+nix-shell -p git
+git clone https://github.com/jbrake/nixos-config.git
+cd nixos-config
+cp /etc/nixos/hardware-configuration.nix hosts/framework-amd-ai-300/   # pick the right host
+sudo NIX_CONFIG="experimental-features = nix-command flakes" \
+  nixos-rebuild boot --flake .#framework-amd-ai-300
+reboot
 ```
 
-**4. Clone and install** (still as root, pick the right host name):
+(`nixos-rebuild boot` swaps the system at the next reboot instead of live,
+which is cleaner when replacing the desktop you're sitting in. The NIX_CONFIG
+bit is only needed this once — the config enables flakes permanently.)
+
+That's it — you reboot into the real system.
+
+<details>
+<summary>Alternative: install straight from the ISO, no interim desktop</summary>
+
+Faster once you know the drill: boot any NixOS ISO, connect Wi-Fi, then as
+root — partition and mount at `/mnt` (1 GB EFI vfat labeled `BOOT` at
+`/mnt/boot`, rest ext4 labeled `nixos` at `/mnt`), then:
 
 ```bash
 git clone https://github.com/jbrake/nixos-config.git
@@ -60,18 +70,16 @@ cd nixos-config
 ./scripts/install-host.sh framework-amd-ai-300
 ```
 
-The script generates `hardware-configuration.nix` from the mounted disk,
-locks the flake, runs `nixos-install`, and copies the repo to
-`/home/jason/Projects/nixos-config` on the new system.
-
-**5. Reboot.** Log in as `jason` / `changeme`.
+The script generates the hardware config, locks the flake, and installs.
+Because no installer wizard asks for a password in this flow, you log in as
+`jason` / `changeme` and must run `passwd` immediately.
+</details>
 
 ## First boot
 
 Terminal part:
 
 ```bash
-passwd                                   # change the temporary password NOW
 fprintd-enroll jason                     # enroll a finger, then test:
 sudo -k; sudo true                       # scan OR just type password — both must work
 cd ~/Projects/nixos-config
