@@ -1,2 +1,6 @@
-[Mouse]
-cursorTheme=capitaine-cursors
+[Libinput][2362][628][PIXA3854:00 093A:0274 Touchpad]
+ClickMethod=2
+DisableWhileTyping=false
+NaturalScroll=true
+ScrollFactor=0.3
+TapToClick=false
