@@ -47,6 +47,7 @@
   };
 
   programs.fish.enable = true;
+  programs.nix-ld.enable = true;
   environment.shells = [ pkgs.fish ];
   security.sudo.wheelNeedsPassword = true;
 
