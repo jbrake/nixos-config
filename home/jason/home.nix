@@ -1,11 +1,23 @@
-{ pkgs, username, ... }:
+{
+  inputs,
+  pkgs,
+  username,
+  ...
+}:
 
 {
+  imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
+
   home.username = username;
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "26.05";
 
   programs.home-manager.enable = true;
+
+  programs.plasma = {
+    enable = true;
+    workspace.lookAndFeel = "org.kde.breezedark.desktop";
+  };
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {
