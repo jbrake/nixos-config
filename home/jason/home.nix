@@ -23,6 +23,7 @@
   home.sessionVariables = {
     BROWSER = "brave";
     EDITOR = "vim";
+    TERMINAL = "ghostty";
   };
 
   xdg.mimeApps = {
@@ -53,9 +54,31 @@
     interactiveShellInit = ''
       set -g fish_greeting
     '';
+    functions.fish_prompt = ''
+      set -l last_status $status
+
+      set_color green
+      echo -n "$USER "
+      set_color $fish_color_cwd
+      echo -n (prompt_pwd)
+      set_color normal
+
+      set -l vcs (fish_vcs_prompt)
+      test -n "$vcs"; and echo -n " $vcs"
+
+      if test $last_status -ne 0
+        set_color red
+        echo -n " [$last_status]"
+        set_color normal
+      end
+
+      echo -n "> "
+    '';
   };
 
   xdg.configFile."alacritty/alacritty.toml".source = ./alacritty/alacritty.toml;
+  xdg.configFile."ghostty/config".source = ./ghostty/config;
+  xdg.configFile."ghostty/themes/jason-nord".source = ./ghostty/themes/jason-nord;
 
   home.packages = with pkgs; [
     claude-code

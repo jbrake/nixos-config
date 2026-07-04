@@ -40,10 +40,26 @@
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
   };
+  xdg.terminal-exec = {
+    enable = true;
+    settings = {
+      default = [
+        "com.mitchellh.ghostty.desktop"
+        "Alacritty.desktop"
+        "org.kde.konsole.desktop"
+      ];
+      KDE = [
+        "com.mitchellh.ghostty.desktop"
+        "Alacritty.desktop"
+        "org.kde.konsole.desktop"
+      ];
+    };
+  };
 
   fonts = {
     packages = with pkgs; [
       # glyph fallback for prompts/TUIs (awesome-terminal-fonts is gone from nixpkgs)
+      nerd-fonts.jetbrains-mono
       nerd-fonts.symbols-only
       dejavu_fonts
       liberation_ttf
@@ -68,6 +84,7 @@
       capitaine-cursors
       discord
       firefox
+      ghostty
       haruna
       meld
       pavucontrol
