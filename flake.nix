@@ -46,6 +46,7 @@
           modules = [
             (import hardwareModule)
             ./modules/nixos/base.nix
+            ./modules/nixos/containers.nix
             ./modules/nixos/desktop-plasma.nix
             ./modules/nixos/fingerprint.nix
             ./hosts/${hostname}/configuration.nix
