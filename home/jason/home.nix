@@ -17,6 +17,10 @@
   programs.plasma = {
     enable = true;
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
+    configFile."powerdevil.notifyrc" = {
+      "Event\\/pluggedin".Action = "";
+      "Event\\/unplugged".Action = "";
+    };
   };
 
   home.sessionPath = [ "$HOME/.local/bin" ];
