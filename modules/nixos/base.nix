@@ -69,6 +69,10 @@
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
   services.flatpak.enable = true;
+  services.tailscale = {
+    enable = true;
+    openFirewall = true;
+  };
 
   zramSwap.enable = true;
 
