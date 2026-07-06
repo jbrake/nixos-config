@@ -10,6 +10,22 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
+  # 150% scaling. Text scaling is used instead of display scaling because
+  # SPICE resizes the virtual display with the virt-manager window, and
+  # GNOME stores display scale per (connector, mode) — it would silently
+  # reset to 100% on every new window size. Text scaling survives resizes.
+  # These are defaults, not locks; Settings can still override them.
+  # scale-monitor-framebuffer additionally unlocks fractional choices in
+  # Settings -> Displays if real display scaling is ever wanted.
+  services.desktopManager.gnome.extraGSettingsOverridePackages = [ pkgs.mutter ];
+  services.desktopManager.gnome.extraGSettingsOverrides = ''
+    [org.gnome.desktop.interface]
+    text-scaling-factor=1.5
+
+    [org.gnome.mutter]
+    experimental-features=['scale-monitor-framebuffer']
+  '';
+
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;

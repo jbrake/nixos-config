@@ -36,9 +36,9 @@
       mkHost =
         {
           hostname,
-          # Hardware-specific modules: nixos-hardware profile, fingerprint
-          # reader, etc. The qemu-vm guest passes none; its VM bits live in
-          # its own configuration.nix.
+          # Per-host modules: nixos-hardware profile, fingerprint reader,
+          # desktop choice (Plasma on the laptops, GNOME in the qemu-vm
+          # guest). VM-specific bits live in qemu-vm's configuration.nix.
           extraModules ? [ ],
         }:
         nixpkgs.lib.nixosSystem {
@@ -49,7 +49,6 @@
           modules = extraModules ++ [
             ./modules/nixos/base.nix
             ./modules/nixos/containers.nix
-            ./modules/nixos/desktop-plasma.nix
             ./hosts/${hostname}/configuration.nix
             home-manager.nixosModules.home-manager
             {
@@ -70,6 +69,7 @@
           hostname = "framework-amd-ai-300";
           extraModules = [
             "${nixos-hardware}/framework/13-inch/amd-ai-300-series"
+            ./modules/nixos/desktop-plasma.nix
             ./modules/nixos/fingerprint.nix
           ];
         };
@@ -78,6 +78,7 @@
           hostname = "framework-intel-core-ultra";
           extraModules = [
             "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3"
+            ./modules/nixos/desktop-plasma.nix
             ./modules/nixos/fingerprint.nix
           ];
         };
@@ -85,6 +86,7 @@
         # QEMU/KVM guest run under virt-manager on the laptops.
         qemu-vm = mkHost {
           hostname = "qemu-vm";
+          extraModules = [ ./modules/nixos/desktop-gnome.nix ];
         };
       };
     };
