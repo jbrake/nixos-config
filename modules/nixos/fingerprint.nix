@@ -1,7 +1,20 @@
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
   services.fprintd.enable = true;
+
+  # Framework's Goodix reader can be flaky after suspend when it is left in
+  # runtime autosuspend. Keep only this internal fingerprint device awake.
+  services.udev.extraRules = lib.mkAfter ''
+    ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="609c", TEST=="power/control", ATTR{power/control}="on"
+  '';
+
+  # If the lock screen is verifying while sleep begins, fprintd can keep the
+  # reader busy and fail after resume. Stop it before sleep; D-Bus starts it
+  # again on the next fingerprint request.
+  powerManagement.powerDownCommands = lib.mkAfter ''
+    ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
+  '';
 
   # Fingerprint auth is deliberately SUDO-ONLY. This mirrors the setup that
   # took real effort to get right on CachyOS (2026-04): PAM modules run
