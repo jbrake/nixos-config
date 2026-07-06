@@ -80,6 +80,25 @@
   virtualisation.spiceUSBRedirection.enable = true;
   programs.virt-manager.enable = true;
 
+  # libvirt ships its "default" NAT network but never starts it, so
+  # virt-manager asks "Virtual Network is not active" on every VM start.
+  # No NixOS option covers network autostart, so flag it ourselves.
+  # net-autostart is idempotent; net-start errors if already running.
+  systemd.services.libvirtd-default-network = {
+    description = "Autostart libvirt default NAT network";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "libvirtd.service" ];
+    after = [ "libvirtd.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.libvirt}/bin/virsh net-autostart default
+      ${pkgs.libvirt}/bin/virsh net-start default || true
+    '';
+  };
+
   environment.systemPackages = with pkgs; [
     btop
     curl
