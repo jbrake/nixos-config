@@ -4,3 +4,16 @@ result-*
 *.qcow2
 *.bak
 secrets/
+.env
+.env.*
+*.key
+*.pem
+*.age
+*.asc
+*.gpg
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+*.pub
+tailscale-authkey*
