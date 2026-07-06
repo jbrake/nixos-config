@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   username,
+  hostname,
   ...
 }:
 
@@ -15,7 +16,9 @@
   programs.home-manager.enable = true;
 
   programs.plasma = {
-    enable = true;
+    # The qemu-vm guest runs GNOME; keep plasma-manager from writing KDE
+    # config there.
+    enable = hostname != "qemu-vm";
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
     configFile."powerdevil.notifyrc" = {
       "Event\\/pluggedin".Action = "";
