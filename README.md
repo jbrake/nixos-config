@@ -8,6 +8,7 @@ Hosts:
 | --- | --- |
 | `framework-amd-ai-300` | Framework 13, AMD Ryzen AI 9 HX 370 |
 | `framework-intel-core-ultra` | Framework 13 Pro, Intel |
+| `qemu-vm` | QEMU/KVM guest under virt-manager on the laptops |
 
 ## What Lives Where
 
@@ -94,6 +95,31 @@ the new system.
 
 This path uses the temporary `changeme` password from `base.nix`. Run `passwd`
 right after the first login.
+
+### VM Guest (qemu-vm)
+
+`base.nix` already gives every laptop libvirtd, virt-manager, and SPICE USB
+redirection, so the host side needs nothing extra.
+
+Create the VM in virt-manager:
+
+1. New VM, boot from the NixOS graphical ISO.
+2. Before finishing, check "Customize configuration before install" and set
+   Overview -> Firmware to **UEFI** (OVMF). systemd-boot will not boot the
+   BIOS default.
+3. Keep the defaults elsewhere: virtio disk (40+ GB — it carries the full
+   Plasma desktop), virtio network, SPICE display.
+
+Then it is the normal installer flow with `qemu-vm` as the host: install with
+the graphical installer, clone this repo, copy the generated
+`hardware-configuration.nix` into `hosts/qemu-vm/` (replacing the committed
+placeholder), and `nixos-rebuild boot --flake .#qemu-vm`. The direct ISO flow
+works too: `./scripts/install-host.sh qemu-vm`.
+
+The guest config enables the QEMU guest agent and SPICE vdagent, so clipboard
+sharing, display auto-resize, and clean shutdown from virt-manager work out of
+the box. The VM shares all the regular modules except `fingerprint.nix` —
+no reader to talk to.
 
 ## First Boot Checklist
 
