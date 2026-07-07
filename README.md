@@ -112,10 +112,13 @@ small `desktop-*.nix` module.
 `base.nix` already gives every laptop libvirtd, virt-manager, and SPICE USB
 redirection, so the host side needs nothing extra.
 
-Fastest way to stand up an additional guest: clone an existing VM in
-virt-manager, boot it, then rebuild it onto the new flake target
-(`sudo nixos-rebuild boot --flake .#vm-<name>`) and reboot. The hostname
-follows the flake target, so `rebuild.sh` picks the right host afterwards.
+Stand up each additional guest with a fresh install (flow below), not by
+cloning an existing VM: a clone carries the old `/home` — dconf, cursor
+and font settings, app state — which is exactly the cross-desktop
+contamination these VMs exist to avoid (a leftover KDE cursor-theme
+setting once turned the GNOME VM's cursor into a grey square). Clones also
+duplicate `/etc/machine-id`. The installer takes a few extra minutes and
+starts truly clean.
 
 Create the VM in virt-manager:
 
