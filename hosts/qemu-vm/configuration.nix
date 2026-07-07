@@ -1,4 +1,4 @@
-{ pkgs, modulesPath, ... }:
+{ pkgs, username, modulesPath, ... }:
 
 {
   imports = [
@@ -27,9 +27,15 @@
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     after = [ "graphical-session-pre.target" ];
+    # User units start for every graphical session, including the GDM
+    # greeter's. vdagentd only accepts one agent, from the active session,
+    # and the greeter's copy racing the real one broke both (UID mismatch
+    # rejections in the vdagentd journal).
+    unitConfig.ConditionUser = username;
     serviceConfig = {
       ExecStart = "${pkgs.spice-vdagent}/bin/spice-vdagent -x";
       Restart = "on-failure";
+      RestartSec = 2;
     };
   };
 }
