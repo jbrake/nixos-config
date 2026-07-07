@@ -115,6 +115,14 @@ Create the VM in virt-manager:
    the window size change. Fix an existing VM with:
    `virt-xml -c qemu:///system <vm> --edit --video model=virtio`
    (takes effect after a full VM power-off, not a guest reboot).
+5. GPU acceleration (smooth GNOME animations) needs BOTH toggles on
+   together, or neither: video `accel3d=yes` AND display OpenGL with the
+   host render node. One without the other = grey-square cursor and a
+   broken display channel. Known-good accelerated setup:
+   `virt-xml -c qemu:///system <vm> --edit --video model=virtio,accel3d=yes`
+   `virt-xml -c qemu:///system <vm> --edit --graphics gl=yes,rendernode=/dev/dri/by-path/<host-gpu>-render`
+   OpenGL forces a local-only (listen=none) display, which is fine under
+   virt-manager on the same machine.
 
 Then it is the normal installer flow with `qemu-vm` as the host: install with
 the graphical installer, clone this repo, copy the generated
