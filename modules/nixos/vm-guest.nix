@@ -15,6 +15,9 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Sandbox VMs don't need the full name on their login screens.
+  users.users.${username}.description = "Jason";
+
   # Lets virt-manager see the guest IP and do clean shutdowns/snapshots.
   services.qemuGuest.enable = true;
   # Clipboard sharing and display auto-resize over SPICE.
