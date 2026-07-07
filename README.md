@@ -110,6 +110,11 @@ Create the VM in virt-manager:
    BIOS default.
 3. Keep the defaults elsewhere: virtio disk (30+ GB), virtio network,
    SPICE display.
+4. Set Video to **virtio**, not QXL. Display auto-resize on a Wayland
+   desktop only works through virtio-gpu; with QXL the guest never sees
+   the window size change. Fix an existing VM with:
+   `virt-xml -c qemu:///system <vm> --edit --video model=virtio`
+   (takes effect after a full VM power-off, not a guest reboot).
 
 Then it is the normal installer flow with `qemu-vm` as the host: install with
 the graphical installer, clone this repo, copy the generated
