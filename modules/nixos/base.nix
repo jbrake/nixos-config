@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   username,
   hostname,
@@ -31,7 +32,8 @@
   users.users.${username} = {
     isNormalUser = true;
     uid = 1000;
-    description = "Jason Brake";
+    # mkDefault so vm-guest.nix can shorten it for the VM login screens.
+    description = lib.mkDefault "Jason Brake";
     home = "/home/${username}";
     createHome = true;
     initialPassword = "changeme";
