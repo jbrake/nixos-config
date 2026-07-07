@@ -34,7 +34,11 @@
     unitConfig.ConditionUser = username;
     serviceConfig = {
       ExecStart = "${pkgs.spice-vdagent}/bin/spice-vdagent -x";
-      Restart = "on-failure";
+      # The unit races GNOME's import of DISPLAY/WAYLAND_DISPLAY into the
+      # user manager at login; losing the race makes vdagent exit 0 after
+      # ~30ms, so plain on-failure never retries. Restart unconditionally —
+      # the second attempt sees the imported environment and sticks.
+      Restart = "always";
       RestartSec = 2;
     };
   };
