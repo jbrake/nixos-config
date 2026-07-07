@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   pkgs,
   username,
   hostname,
@@ -16,9 +17,10 @@
   programs.home-manager.enable = true;
 
   programs.plasma = {
-    # The qemu-vm guest runs GNOME; keep plasma-manager from writing KDE
-    # config there.
-    enable = hostname != "qemu-vm";
+    # Only the laptops run Plasma; keep plasma-manager from writing KDE
+    # config into the VM guests' homes (a stray KDE cursor-theme setting
+    # once broke the GNOME VM's cursor).
+    enable = lib.hasPrefix "framework-" hostname;
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
     configFile."powerdevil.notifyrc" = {
       "Event\\/pluggedin".Action = "";
