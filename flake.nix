@@ -37,8 +37,8 @@
         {
           hostname,
           # Per-host modules: nixos-hardware profile, fingerprint reader,
-          # desktop choice (Plasma on the laptops, GNOME in the qemu-vm
-          # guest). VM-specific bits live in qemu-vm's configuration.nix.
+          # and the desktop choice (Plasma on the laptops, one desktop per
+          # VM guest).
           extraModules ? [ ],
         }:
         nixpkgs.lib.nixosSystem {
@@ -62,6 +62,19 @@
             }
           ];
         };
+
+      # QEMU/KVM guests run under virt-manager on the laptops — one VM per
+      # desktop environment, because desktops sharing an install (or a
+      # $HOME) contaminate each other's cursors, fonts, and settings.
+      mkVmHost =
+        { hostname, desktopModule }:
+        mkHost {
+          inherit hostname;
+          extraModules = [
+            ./modules/nixos/vm-guest.nix
+            desktopModule
+          ];
+        };
     in
     {
       nixosConfigurations = {
@@ -83,10 +96,26 @@
           ];
         };
 
-        # QEMU/KVM guest run under virt-manager on the laptops.
-        qemu-vm = mkHost {
+        # The GNOME guest keeps its historical name: the installed VM's
+        # hostname is baked in, and rebuild.sh matches on hostname.
+        qemu-vm = mkVmHost {
           hostname = "qemu-vm";
-          extraModules = [ ./modules/nixos/desktop-gnome.nix ];
+          desktopModule = ./modules/nixos/desktop-gnome.nix;
+        };
+
+        vm-cosmic = mkVmHost {
+          hostname = "vm-cosmic";
+          desktopModule = ./modules/nixos/desktop-cosmic.nix;
+        };
+
+        vm-hyprland = mkVmHost {
+          hostname = "vm-hyprland";
+          desktopModule = ./modules/nixos/desktop-hyprland.nix;
+        };
+
+        vm-cinnamon = mkVmHost {
+          hostname = "vm-cinnamon";
+          desktopModule = ./modules/nixos/desktop-cinnamon.nix;
         };
       };
     };
