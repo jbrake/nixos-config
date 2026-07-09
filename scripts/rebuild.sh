@@ -19,5 +19,17 @@ if [[ ! -d "$repo_root/hosts/$host" ]]; then
   exit 1
 fi
 
+prev="$(readlink -f /run/current-system)"
+
 echo "Running: sudo nixos-rebuild switch --flake $flake_ref"
 sudo nixos-rebuild switch --flake "$flake_ref"
+
+# The closure diff is NixOS's upgrade log: show what actually changed.
+new="$(readlink -f /run/current-system)"
+if [[ "$prev" == "$new" ]]; then
+  echo "No changes: same system as before."
+else
+  echo
+  echo "=== Package changes (this vs. previous generation) ==="
+  nix store diff-closures "$prev" "$new"
+fi
