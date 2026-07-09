@@ -37,6 +37,11 @@
 
   xdg.mimeApps = {
     enable = true;
+    # Claude Code's desktop integration registers this handler by editing
+    # mimeapps.list in place; declare it so the overwrite below keeps it.
+    associations.added = {
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+    };
     defaultApplications = {
       "inode/directory" = "org.kde.dolphin.desktop";
       "text/html" = "brave-browser.desktop";
@@ -46,6 +51,11 @@
       "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
     };
   };
+  # Desktops and apps rewrite mimeapps.list behind home-manager's back, and
+  # the backup-before-replace dance jams once a .hm-backup exists (failed a
+  # rebuild once). Overwrite instead: ad-hoc default-app changes get reverted
+  # at rebuild; anything worth keeping belongs in defaultApplications above.
+  xdg.configFile."mimeapps.list".force = true;
 
   programs.git = {
     enable = true;
