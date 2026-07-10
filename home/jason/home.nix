@@ -99,12 +99,16 @@
   xdg.configFile."ghostty/config".source = ./ghostty/config;
   xdg.configFile."ghostty/themes/jason-nord".source = ./ghostty/themes/jason-nord;
 
-  home.packages = with pkgs; [
-    claude-code
-    codex
-    nodejs
-    python3
-    unrar
-    uv
-  ];
+  home.packages =
+    # From dedicated flakes, not nixpkgs — see the inputs comment in flake.nix.
+    (map (input: input.packages.${pkgs.stdenv.hostPlatform.system}.default) [
+      inputs.claude-code-nix
+      inputs.codex-cli-nix
+    ])
+    ++ (with pkgs; [
+      nodejs
+      python3
+      unrar
+      uv
+    ]);
 }

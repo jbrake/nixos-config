@@ -20,6 +20,16 @@
     };
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    # AI CLIs from dedicated flakes instead of nixpkgs: upstream repackages
+    # the vendors' official binaries within the hour, while nixpkgs-unstable
+    # can lag a week+ — too slow when new models require the new CLI.
+    # Deliberately no nixpkgs follows (self-contained per upstream docs) and
+    # no cachix substituter (local "build" is just fetch + patchelf).
+    # Update independently of nixpkgs:
+    #   nix flake update claude-code-nix codex-cli-nix
+    claude-code-nix.url = "github:sadjow/claude-code-nix";
+    codex-cli-nix.url = "github:sadjow/codex-cli-nix";
   };
 
   outputs =
