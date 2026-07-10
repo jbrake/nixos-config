@@ -24,5 +24,16 @@ cd "$repo_root"
 echo "Running: nix flake update"
 nix flake update
 
+# A bad update must not strand the lock file (nixpkgs-unstable breaks
+# sometimes): prove the system builds before switching, and put the lock
+# back the way it was if it doesn't.
+echo "Verifying the updated inputs build..."
+if ! nix build "path:$repo_root#nixosConfigurations.\"$host\".config.system.build.toplevel" --no-link; then
+  echo "Build failed with updated inputs — restoring flake.lock." >&2
+  echo "Retry the update in a few days; the fix has to land upstream." >&2
+  git -C "$repo_root" restore flake.lock
+  exit 1
+fi
+
 echo "Running: sudo nixos-rebuild switch --flake $flake_ref"
 sudo nixos-rebuild switch --flake "$flake_ref"
