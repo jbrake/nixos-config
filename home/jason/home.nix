@@ -26,6 +26,10 @@
       "Event\\/pluggedin".Action = "";
       "Event\\/unplugged".Action = "";
     };
+    # Keep the existing, manually arranged panel; only manage its clock format.
+    configFile."plasma-org.kde.plasma.desktop-appletsrc" = {
+      "Containments][25][Applets][43][Configuration][Appearance".use24hFormat = 2;
+    };
   };
 
   home.sessionPath = [ "$HOME/.local/bin" ];
