@@ -164,29 +164,70 @@ belongs in Git.
 
 ### Authorizing a Replacement SSH Key
 
-Display the replacement public key:
+The new private key stays on the laptop. Only its public half is copied to the
+NAS. The public key lets the NAS recognize this Restic client; it cannot decrypt
+the backup. The separate Restic repository password is still required for that.
+
+First, display the replacement public key:
 
 ```bash
 sudo cat /var/lib/secrets/restic-ssh-key.pub
 ```
 
-In DSM, create a temporary root-owned user-defined task under **Control Panel ->
-Task Scheduler**. Replace `PASTE_PUBLIC_KEY_HERE` and run the task once:
+Copy the entire single line beginning with `ssh-ed25519`. It is safe to move
+this public line through the clipboard, email, or another computer; do not copy
+or expose the private file with the same name but no `.pub` suffix.
+
+Then authorize it from the Synology web interface:
+
+1. Sign in to DSM as an administrator. From the home network, use the normal
+   bookmarked DSM address or `https://10.69.1.164:5001` if the default HTTPS
+   port has not been changed.
+2. Open **Control Panel -> Task Scheduler**.
+3. Choose **Create -> Scheduled Task -> User-defined script**.
+4. On **General**, give it a temporary name such as `Install Jason Restic key`
+   and select `root` as the task user. The task must run as root because DSM
+   does not provide an ordinary editor for another user's `authorized_keys`.
+5. On **Task Settings**, paste the script below into **User-defined script**.
+   Replace `PASTE_PUBLIC_KEY_HERE` with the complete public-key line copied in
+   the previous step. Keep the single quotes around it.
+6. Save the task, select it in Task Scheduler, choose **Run**, and confirm. DSM
+   may ask for the administrator password again. Wait for the task status to
+   show that it completed.
+
+The script preserves an existing authorized key and adds the new one only if it
+is not already present:
 
 ```sh
 set -eu
 
 user="restic-jason"
 home="/var/services/homes/$user"
+key='PASTE_PUBLIC_KEY_HERE'
 
 install -d -m 700 -o "$user" -g users "$home/.ssh"
-printf '%s\n' 'PASTE_PUBLIC_KEY_HERE' > "$home/.ssh/authorized_keys"
+touch "$home/.ssh/authorized_keys"
+if ! grep -qxF "$key" "$home/.ssh/authorized_keys"; then
+  printf '%s\n' "$key" >> "$home/.ssh/authorized_keys"
+fi
 chown "$user":users "$home/.ssh/authorized_keys"
 chmod 600 "$home/.ssh/authorized_keys"
 chmod go-w "$home"
 ```
 
-Delete or disable the DSM task after key-only authentication succeeds.
+Back on the NixOS machine, prove that the new SSH key reaches the repository and
+that the Restic password decrypts it:
+
+```bash
+sudo restic-jason-home snapshots
+```
+
+Only a snapshot listing is performed; this does not create, remove, or alter a
+backup. After it succeeds, delete the temporary DSM task so it cannot be run
+again accidentally. If the old private key may have been stolen, also remove
+its corresponding public-key line from `authorized_keys`; merely losing an old
+private key does not require immediate removal, but leaving unused access in
+place is unnecessary.
 
 ## Routine Commands
 
@@ -272,6 +313,52 @@ Inspect or copy the file, then remove the staging directory:
 sudo rm -rf /tmp/restic-restore
 ```
 
+## Working From a TTY
+
+A TTY is a full-screen text login provided directly by Linux. It does not
+depend on Plasma, and it remains available even when the graphical login screen
+is stopped. This makes it the safest place to restore a home directory because
+Brave, Plasma, and other desktop applications cannot modify the same files
+while they are being copied.
+
+For a planned final backup or recovery:
+
+1. Save work and close applications. In Plasma, open the application launcher,
+   choose **Leave**, and select **Log Out**. Wait for the graphical login screen.
+2. Press `Ctrl-Alt-F3` to open a text console. On a keyboard where the function
+   row is in media-key mode, use `Ctrl-Alt-Fn-F3`. TTYs are normally available
+   on `F2` through `F6`, so another one can be used if `F3` is occupied.
+3. At `login:`, enter `jason`, press Enter, and enter the normal login password.
+   Nothing is displayed while the password is typed; that is expected.
+4. For a full restore, prevent the graphical login manager from being started
+   or used while files are copied:
+
+   ```bash
+   sudo systemctl stop display-manager.service
+   ```
+
+5. Run the restore, `rsync`, and rebuild commands from the recovery procedure
+   below. Keeping this README open on a phone or another computer is useful
+   because the TTY has no browser or graphical clipboard.
+6. When recovery and the final rebuild are complete, either reboot or restart
+   the graphical login screen:
+
+   ```bash
+   sudo systemctl start display-manager.service
+   ```
+
+   If it starts on a different virtual terminal, `Ctrl-Alt-F1` or
+   `Ctrl-Alt-F2` normally returns to it.
+
+For a final pre-wipe backup, logging out and switching to a TTY is enough; the
+display manager does not need to be stopped. Run the usual manual backup there
+and wait for it to finish:
+
+```bash
+sudo systemctl start restic-backups-jason-home.service
+sudo restic-jason-home snapshots --latest 1
+```
+
 ## Full Fresh-System Recovery
 
 1. Install NixOS, clone this repository, and provide the generated hardware
@@ -293,8 +380,10 @@ sudo rm -rf /tmp/restic-restore
    sudo chmod 600 /var/lib/secrets/restic-password
    ```
 
-4. Restore the old SSH private key, or create a replacement and authorize its
-   public key for `restic-jason` on the Synology.
+4. Restore the old SSH private key from a separate safe copy, or create a
+   replacement. Generating the key creates two files: the root-only private key
+   at `/var/lib/secrets/restic-ssh-key` and the safe-to-copy public key at
+   `/var/lib/secrets/restic-ssh-key.pub`.
 
    ```bash
    sudo ssh-keygen -t ed25519 -N "" \
@@ -303,15 +392,21 @@ sudo rm -rf /tmp/restic-restore
    sudo chmod 600 /var/lib/secrets/restic-ssh-key
    ```
 
+   A newly generated key has no NAS access yet. Follow
+   [Authorizing a Replacement SSH Key](#authorizing-a-replacement-ssh-key) to
+   place only its public half in the `restic-jason` account's
+   `authorized_keys` file on the Synology.
+
 5. Prove that both authentication layers work.
 
    ```bash
    sudo restic-jason-home snapshots
    ```
 
-6. Log out of the graphical session so browsers, Plasma, and other applications
-   are not modifying their databases. From a TTY, restore the latest snapshot
-   into staging storage with enough free space.
+6. Follow [Working From a TTY](#working-from-a-tty), including stopping the
+   display manager, so browsers, Plasma, and other applications are not
+   modifying their databases. Restore the latest snapshot into staging storage
+   with enough free space.
 
    ```bash
    sudo restic-jason-home restore latest --target /mnt/restic-restore
@@ -321,8 +416,15 @@ sudo rm -rf /tmp/restic-restore
 
    ```bash
    sudo rsync -aHAX --numeric-ids \
+     --exclude='/Documents/repos/nixos-config/' \
      /mnt/restic-restore/home/jason/ /home/jason/
    ```
+
+   The exclusion preserves the clean repository clone used for the new NixOS
+   installation instead of overlaying it with the version captured in the
+   backup. The backed-up copy remains available under
+   `/mnt/restic-restore/home/jason/Documents/repos/nixos-config` if uncommitted
+   work ever needs to be recovered manually.
 
 8. Rebuild once more. Home Manager will reassert the files and symlinks it owns
    while leaving restored application data and unmanaged Plasma state intact.
