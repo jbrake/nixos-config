@@ -147,8 +147,9 @@ sudo ./scripts/switch-desktop.sh cosmic
 ```
 
 Use the same command with `plasma` to return. Personal files and application
-profiles stay shared; normal rebuild and update commands retain the active
-hardware and desktop profile.
+profiles stay shared; desktop-sensitive state is saved automatically in a local
+capsule. Add `--backup` only when a fresh encrypted Restic snapshot on the NAS
+is also wanted. Normal rebuild and update commands retain the active profile.
 
 Update inputs, prove the new system builds, and switch only after success:
 
