@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target="${1:?usage: desktop-state-activate.sh <plasma|gnome> <home> [owner] [group]}"
-home="${2:?usage: desktop-state-activate.sh <plasma|gnome> <home> [owner] [group]}"
+target="${1:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic> <home> [owner] [group]}"
+home="${2:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic> <home> [owner] [group]}"
 owner="${3:-jason}"
 group="${4:-users}"
 
-if [[ "$target" != "plasma" && "$target" != "gnome" ]]; then
-  echo "Unsupported desktop state target: $target" >&2
-  exit 1
-fi
+case "$target" in
+  plasma | gnome | cinnamon | cosmic) ;;
+  *)
+    echo "Unsupported desktop state target: $target" >&2
+    exit 1
+    ;;
+esac
 
 if [[ "$home" != /* || "$home" == "/" || ! -d "$home" ]]; then
   echo "Unsafe or missing home directory: $home" >&2
@@ -43,10 +46,13 @@ if [[ ! -f "$marker" ]]; then
 fi
 
 current="$(<"$marker")"
-if [[ "$current" != "plasma" && "$current" != "gnome" ]]; then
-  echo "Invalid desktop state marker: $current" >&2
-  exit 1
-fi
+case "$current" in
+  plasma | gnome | cinnamon | cosmic) ;;
+  *)
+    echo "Invalid desktop state marker: $current" >&2
+    exit 1
+    ;;
+esac
 
 declare -A seen=()
 managed_paths=()
@@ -90,6 +96,7 @@ collect_paths() {
   local path
   for path in \
     ".gtkrc-2.0" \
+    ".cinnamon" \
     ".icons" \
     ".themes" \
     ".config/dconf" \
@@ -106,6 +113,8 @@ collect_paths() {
     "KDE" \
     "baloo*" \
     "breeze*" \
+    "cinnamon*" \
+    "cosmic*" \
     "dolphin*" \
     "goa-1.0" \
     "gnome*" \
@@ -126,6 +135,7 @@ collect_paths() {
     "kscreen*" \
     "kwin*" \
     "nautilus" \
+    "nemo*" \
     "plasma*" \
     "powerdevil*" \
     "qt5ct" \
@@ -138,6 +148,8 @@ collect_paths() {
   collect_named_children ".local/share" \
     "baloo" \
     "color-schemes" \
+    "cinnamon*" \
+    "cosmic*" \
     "dolphin" \
     "evolution" \
     "gnome-shell" \
@@ -154,8 +166,13 @@ collect_paths() {
     "kwalletd" \
     "kxmlgui*" \
     "nautilus" \
+    "nemo*" \
     "plasma*" \
     "sddm"
+
+  collect_named_children ".local/state" \
+    "cinnamon*" \
+    "cosmic*"
 }
 
 save_current_state() {
@@ -206,8 +223,9 @@ restore_state() {
 clear_desktop_caches() {
   [[ -d "$home/.cache" ]] || return 0
   find "$home/.cache" -mindepth 1 -maxdepth 1 \
-    \( -name 'gnome-shell*' -o -name 'gtk-*' -o -name 'ksycoca*' \
-    -o -name 'kwin*' -o -name 'plasma*' \) -exec rm -rf -- {} +
+    \( -name 'cinnamon*' -o -name 'cosmic*' -o -name 'gnome-shell*' \
+    -o -name 'gtk-*' -o -name 'ksycoca*' -o -name 'kwin*' \
+    -o -name 'nemo*' -o -name 'plasma*' \) -exec rm -rf -- {} +
 }
 
 finish_transition() {

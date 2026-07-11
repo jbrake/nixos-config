@@ -1,10 +1,13 @@
-# Switching Between Plasma and GNOME
+# Switching Desktop Environments
 
-The AMD laptop has two NixOS outputs for the same hardware:
+Both Framework laptops expose four profiles. Replace `HOST` with
+`framework-amd-ai-300` or `framework-intel-core-ultra`:
 
 ```text
-framework-amd-ai-300         Plasma
-framework-amd-ai-300-gnome   GNOME
+HOST             Plasma
+HOST-gnome       GNOME
+HOST-cinnamon    Cinnamon
+HOST-cosmic      COSMIC
 ```
 
 Both share the same personal files, applications, hardware, backup,
@@ -14,6 +17,8 @@ desktop-sensitive state in separate capsules:
 ```text
 ~/.local/state/desktop-profiles/plasma
 ~/.local/state/desktop-profiles/gnome
+~/.local/state/desktop-profiles/cinnamon
+~/.local/state/desktop-profiles/cosmic
 ```
 
 The capsules are root-owned and are included in the existing encrypted Restic
@@ -21,26 +26,28 @@ home backup.
 
 ## First-Time Setup
 
-Apply the current Plasma configuration once before the first switch:
+Apply the current configuration once before the first switch:
 
 ```bash
 ./scripts/rebuild.sh
 ```
 
-This installs the boot-time state service and records Plasma as the current
-desktop. It does not move any files during this first activation.
+This installs the boot-time state service and records the active desktop. It
+does not move any files during this first activation.
 
 ## Switch Desktops
 
-Schedule GNOME for the next boot:
+Schedule any desktop for the next boot:
 
 ```bash
 sudo ./scripts/switch-desktop.sh gnome
+sudo ./scripts/switch-desktop.sh cinnamon
+sudo ./scripts/switch-desktop.sh cosmic
 ```
 
-Close applications and reboot normally. Before GDM starts, the service saves
-the current Plasma state and restores the last GNOME state. GNOME starts clean
-the first time because it has no saved capsule yet.
+Close applications and reboot normally. Before the target display manager
+starts, the service saves the current desktop state and restores the target's
+last capsule. A desktop starts clean the first time.
 
 Return to the last Plasma state:
 
@@ -48,8 +55,7 @@ Return to the last Plasma state:
 sudo ./scripts/switch-desktop.sh plasma
 ```
 
-After using GNOME again, its latest state is saved before Plasma starts. Every
-later switch restores the target desktop where it was left.
+Every later switch restores the target desktop where it was left.
 
 Useful optional flags are:
 
@@ -76,15 +82,16 @@ These remain shared and are never rolled backward by a desktop switch:
 - Brave, Discord, Telegram, Steam, and PrismLauncher
 - Codex, Claude, SSH, Git, and shell data
 
-These are saved separately for Plasma and GNOME:
+These are saved separately for all four desktops:
 
 - Plasma panels, KWin, KDE applications, KDE Connect, and KDE Wallet
 - GNOME dconf, Shell state, Nautilus, GNOME Online Accounts, and GNOME Keyring
+- Cinnamon dconf, panels, applets, Nemo, Online Accounts, and keyring
+- COSMIC panels, tiling, applications, themes, Files, and keyring
 - GTK, Qt, cursor, icon, portal, and desktop theme state
 
-Because KDE Wallet and GNOME Keyring are separate, an application may require
-authentication the first time it runs under a desktop. That desktop remembers
-the credentials on later returns.
+Credential stores are isolated with their desktop. An application may require
+authentication the first time it runs there, then remember it on later returns.
 
 ## GNOME Defaults
 
@@ -122,6 +129,23 @@ approximated.
 The adapted defaults are based on Bluefin's Apache-2.0 licensed
 [GNOME configuration](https://github.com/projectbluefin/common/blob/ed4aa87ad93b1e5ae2501d5b62a8dc5063c45a52/system_files/bluefin/usr/share/glib-2.0/schemas/zz0-bluefin-modifications.gschema.override).
 
+## Cinnamon and COSMIC Defaults
+
+Cinnamon uses the native NixOS Cinnamon module with LightDM, Nemo, portals,
+keyring integration, and its standard applications. Native GSettings defaults
+match the Plasma touchpad where possible: tap-to-click, tap-and-drag, and
+disable-while-typing are off; natural two-finger scrolling and finger-based
+physical clicking are on.
+
+COSMIC uses the native NixOS COSMIC module with its Wayland compositor,
+greeter, panel, tiling, settings, applications, portals, and Cosmic Files.
+COSMIC is still evolving and stores settings in its own versioned files, so
+appearance and touchpad choices remain interactive and are preserved by the
+COSMIC capsule rather than declaring unstable internal file formats.
+
+Ghostty is the preferred terminal and each desktop's native file manager is the
+default. Shared workstation applications remain identical across profiles.
+
 ## Status and Troubleshooting
 
 Show the active NixOS output and desktop-state service:
@@ -144,7 +168,7 @@ desktop from its saved capsule.
 
 ## Clean Recovery or Reinstallation
 
-For a fresh disk installation, select either NixOS output and follow the
+For a fresh disk installation, select any laptop output and follow the
 [backup recovery guide](backup-recovery.md). To migrate into GNOME without
 restoring Plasma state, restore the old snapshot into
 `/mnt/restic-restore`, preview the curated copy, and apply it:

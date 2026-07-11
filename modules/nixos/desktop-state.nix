@@ -25,8 +25,10 @@ in
       assertion = builtins.elem desktop [
         "plasma"
         "gnome"
+        "cinnamon"
+        "cosmic"
       ];
-      message = "Desktop state capsules support only Plasma and GNOME laptop profiles.";
+      message = "Unsupported laptop desktop state capsule: ${desktop}";
     }
   ];
 

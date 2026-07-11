@@ -15,7 +15,7 @@ retention:   7 daily, 5 weekly, 12 monthly, 3 yearly
 protected:   snapshots tagged archive
 ```
 
-The backup includes documents, Plasma and GNOME state capsules, Brave profiles
+The backup includes documents, all four desktop state capsules, Brave profiles
 and extensions, PrismLauncher instances and Minecraft worlds, Codex sessions,
 SSH keys, desktop credential stores, and other files under `/home/jason`.
 
@@ -88,7 +88,7 @@ and the system journal.
 First commit and push the NixOS repository. Then close Codex and other
 applications so their latest state is written to disk.
 
-1. Log out of Plasma or GNOME from its system menu.
+1. Log out of the graphical desktop from its system menu.
 2. At the graphical login screen, press `Ctrl-Alt-F3`. If the function row is
    in media-key mode, press `Ctrl-Alt-Fn-F3`.
 3. Log in as `jason`. The password remains invisible while typing.
@@ -115,7 +115,7 @@ the laptop; only the public `.pub` line goes to the NAS.
    ```bash
    sudo install -d -m 700 -o root -g root /var/lib/secrets
    sudo ssh-keygen -t ed25519 -N "" \
-     -C "restic-jason@framework-amd-ai-300" \
+     -C "restic-jason@$(hostname)" \
      -f /var/lib/secrets/restic-ssh-key
    sudo chmod 600 /var/lib/secrets/restic-ssh-key
    sudo cat /var/lib/secrets/restic-ssh-key.pub
@@ -156,13 +156,31 @@ the laptop; only the public `.pub` line goes to the NAS.
 The SSH key only opens the SFTP connection. The Restic password is still needed
 to decrypt the repository.
 
+## Replace the AMD Laptop with the Intel Laptop
+
+The Intel profiles use the same encrypted repository and backup password. The
+replacement workflow deliberately replaces the NAS SSH key, revoking the AMD
+laptop before it is sold.
+
+1. Commit and push this repository, then complete the
+   [final logged-out backup](#final-backup-before-reinstalling) on the AMD
+   laptop.
+2. Install the Intel laptop using `framework-intel-core-ultra`, optionally with
+   the `-gnome`, `-cinnamon`, or `-cosmic` suffix.
+3. Follow the full recovery below. Generate a new Intel SSH key and use the DSM
+   task to replace the old AMD key.
+4. Restore the latest AMD snapshot and verify important data.
+5. Run a new backup from Intel and confirm its snapshot appears.
+6. Only then erase the AMD laptop for sale.
+
 ## Full Recovery on a Fresh Installation
 
 ### 1. Install and rebuild NixOS
 
-These commands restore the Plasma profile. To start with GNOME instead, use
-`framework-amd-ai-300-gnome` in both rebuild commands below. Desktop state from
-the backup remains available either way.
+The example commands target the replacement Intel laptop with Plasma. Append
+`-gnome`, `-cinnamon`, or `-cosmic` to `profile` to start elsewhere. For the AMD
+laptop, set both variables to `framework-amd-ai-300`. Desktop state from the
+backup remains available regardless of the starting profile.
 
 Install NixOS with the graphical installer:
 
@@ -182,10 +200,12 @@ cd ~/Documents/repos
 nix-shell -p git
 git clone https://github.com/jbrake/nixos-config.git
 cd nixos-config
+hardware=framework-intel-core-ultra
+profile=framework-intel-core-ultra
 cp /etc/nixos/hardware-configuration.nix \
-  hosts/framework-amd-ai-300/hardware-configuration.nix
+  "hosts/$hardware/hardware-configuration.nix"
 sudo NIX_CONFIG="experimental-features = nix-command flakes" \
-  nixos-rebuild boot --flake .#framework-amd-ai-300
+  nixos-rebuild boot --flake ".#$profile"
 sudo reboot
 ```
 
@@ -253,14 +273,16 @@ From the same TTY:
 
 ```bash
 cd /home/jason/Documents/repos/nixos-config
-sudo nixos-rebuild switch --flake .#framework-amd-ai-300
+profile=framework-intel-core-ultra
+sudo nixos-rebuild switch --flake ".#$profile"
 sudo reboot
 ```
 
 Log in and check documents, Brave, the selected desktop, PrismLauncher worlds,
 SSH keys, and other important data. Applications may require authentication
-again. See [Switching Between Plasma and GNOME](desktop-switching.md) to change
-desktops or perform a clean GNOME migration without restoring Plasma settings.
+again. See [Switching Desktop Environments](desktop-switching.md) to change
+desktops or perform a clean GNOME migration without restoring other desktop
+settings.
 
 Only after confirming the restore, remove the temporary copy:
 

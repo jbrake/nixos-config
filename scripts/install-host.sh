@@ -10,8 +10,8 @@ usage() {
 Usage: sudo $0 <profile> [target-root]
 
 Examples:
-  sudo $0 framework-amd-ai-300
-  sudo $0 framework-amd-ai-300-gnome
+  sudo $0 framework-intel-core-ultra
+  sudo $0 framework-intel-core-ultra-cosmic
 
 Hardware directories:
 EOF

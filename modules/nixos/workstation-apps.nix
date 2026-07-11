@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 # Applications and supporting services used on either laptop desktop. Keep
-# desktop-specific tools in desktop-plasma.nix or desktop-gnome-laptop.nix.
+# desktop-specific tools in the individual desktop role modules.
 {
   services.xserver.enable = true;
   services.xserver.xkb.layout = "us";
