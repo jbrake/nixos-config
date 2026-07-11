@@ -2,10 +2,8 @@
   description = "Jason's NixOS laptop configurations";
 
   inputs = {
-    # nixos-unstable: matches the Plasma 6.7 currently in use, and carries the
-    # freshest kernel/firmware for the Panther Lake 13 Pro arriving Aug 2026.
-    # flake.lock pins the exact revision; roll back from the boot menu if an
-    # update misbehaves. Fallback if unstable gets too spicy: nixos-26.05.
+    # Unstable carries current Plasma, kernels, and firmware for both Framework
+    # generations. flake.lock pins every input for reproducible builds.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
@@ -21,9 +19,8 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    # AI CLIs from dedicated flakes instead of nixpkgs: upstream repackages
-    # the vendors' official binaries within the hour, while nixpkgs-unstable
-    # can lag a week+ — too slow when new models require the new CLI.
+    # AI CLIs come from dedicated, independently pinned flakes because they
+    # generally package vendor releases sooner than nixpkgs-unstable.
     # Deliberately no nixpkgs follows (self-contained per upstream docs) and
     # no cachix substituter (local "build" is just fetch + patchelf).
     # Update independently of nixpkgs:
@@ -34,6 +31,7 @@
 
   outputs =
     inputs@{
+      self,
       nixpkgs,
       home-manager,
       nixos-hardware,
@@ -41,11 +39,13 @@
     }:
     let
       system = "x86_64-linux";
-      username = "jason";
+      pkgs = nixpkgs.legacyPackages.${system};
 
       mkHost =
         {
           hostname,
+          username ? "jason",
+          homeModule ? ./home/jason/home.nix,
           # Per-host modules: nixos-hardware profile, fingerprint reader,
           # and the desktop choice (Plasma on the laptops, one desktop per
           # VM guest).
@@ -69,9 +69,25 @@
               home-manager.extraSpecialArgs = {
                 inherit inputs username hostname;
               };
-              home-manager.users.${username} = import ./home/jason/home.nix;
+              home-manager.users.${username} = import homeModule;
             }
           ];
+        };
+
+      mkLaptopHost =
+        {
+          hostname,
+          username ? "jason",
+          homeModule ? ./home/jason/home.nix,
+          extraModules ? [ ],
+        }:
+        mkHost {
+          inherit hostname username homeModule;
+          extraModules = [
+            ./modules/nixos/laptop.nix
+            ./modules/nixos/virtualization-host.nix
+          ]
+          ++ extraModules;
         };
 
       # QEMU/KVM guests run under virt-manager on the laptops — one VM per
@@ -89,7 +105,7 @@
     in
     {
       nixosConfigurations = {
-        framework-amd-ai-300 = mkHost {
+        framework-amd-ai-300 = mkLaptopHost {
           hostname = "framework-amd-ai-300";
           extraModules = [
             "${nixos-hardware}/framework/13-inch/amd-ai-300-series"
@@ -105,7 +121,7 @@
           ];
         };
 
-        framework-intel-core-ultra = mkHost {
+        framework-intel-core-ultra = mkLaptopHost {
           hostname = "framework-intel-core-ultra";
           extraModules = [
             "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3"
@@ -136,5 +152,22 @@
           desktopModule = ./modules/nixos/desktop-cinnamon.nix;
         };
       };
+
+      formatter.${system} = pkgs.nixfmt-tree;
+
+      devShells.${system}.default = pkgs.mkShellNoCC {
+        packages = with pkgs; [
+          deadnix
+          gitleaks
+          lychee
+          shellcheck
+          statix
+        ];
+      };
+
+      # Build the deployed laptop in CI. Nix also evaluates every exported
+      # nixosConfiguration during `nix flake check`.
+      checks.${system}.framework-amd-ai-300 =
+        self.nixosConfigurations.framework-amd-ai-300.config.system.build.toplevel;
     };
 }

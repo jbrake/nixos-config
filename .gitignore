@@ -17,3 +17,8 @@ id_ecdsa*
 id_dsa*
 *.pub
 tailscale-authkey*
+
+# Local AI-assistant state and machine-specific permissions.
+.claude/settings.local.json
+.codex/
+.agents/

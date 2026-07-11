@@ -38,7 +38,6 @@
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
-    dedicatedServer.openFirewall = true;
   };
   xdg.terminal-exec = {
     enable = true;

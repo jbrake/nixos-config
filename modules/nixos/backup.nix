@@ -1,12 +1,16 @@
 {
   config,
   lib,
+  pkgs,
   username,
   ...
 }:
 
 let
   cfg = config.jbrake.resticBackup;
+  jobName = "${cfg.user}-home";
+  serviceName = "restic-backups-${jobName}";
+  failureServiceName = "restic-backup-failure-${jobName}";
 in
 {
   options.jbrake.resticBackup = {
@@ -73,12 +77,12 @@ in
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOH23DBozgUWp/8NRyvCIC6THkhI/wV6QuY7Hp5LL8Ra";
     };
 
-    services.restic.backups."${cfg.user}-home" = {
+    services.restic.backups.${jobName} = {
       initialize = true;
       repository = "sftp:${cfg.nasUser}@${cfg.nasHost}:/${cfg.nasShare}";
-      passwordFile = cfg.passwordFile;
+      inherit (cfg) passwordFile;
       paths = [ "/home/${cfg.user}" ];
-      exclude = cfg.exclude;
+      inherit (cfg) exclude;
 
       extraOptions = [
         "sftp.command='ssh ${cfg.nasUser}@${cfg.nasHost} -i ${cfg.sshKeyFile} -o IdentitiesOnly=yes -s sftp'"
@@ -99,7 +103,37 @@ in
         "--keep-yearly 3"
       ];
       runCheck = true;
-      checkOpts = [ "--with-cache" ];
+      # The normal structural check is inexpensive. Reading a random 5% of
+      # stored data each run also detects damaged pack contents over time.
+      checkOpts = [
+        "--with-cache"
+        "--read-data-subset=5%"
+      ];
+    };
+
+    systemd.services.${serviceName}.onFailure = [ "${failureServiceName}.service" ];
+
+    # Report scheduled failures in the journal, logged-in terminals, and the
+    # user's graphical session when one is available.
+    systemd.services.${failureServiceName} = {
+      description = "Notify ${cfg.user} that the Restic backup failed";
+      serviceConfig.Type = "oneshot";
+      script = ''
+        message="Restic backup ${jobName} failed. Check: journalctl -u ${serviceName}.service"
+        echo "$message"
+        ${pkgs.util-linux}/bin/wall -n "$message" || true
+
+        uid="$(${pkgs.coreutils}/bin/id -u ${lib.escapeShellArg cfg.user})"
+        if [[ -S "/run/user/$uid/bus" ]]; then
+          ${pkgs.util-linux}/bin/runuser -u ${lib.escapeShellArg cfg.user} -- \
+            ${pkgs.coreutils}/bin/env \
+              XDG_RUNTIME_DIR="/run/user/$uid" \
+              DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+              ${pkgs.libnotify}/bin/notify-send \
+                --app-name="Restic" --urgency=critical \
+                "Backup failed" "$message" || true
+        fi
+      '';
     };
   };
 }
