@@ -97,6 +97,8 @@ in
       inhibitsSleep = true;
 
       pruneOpts = [
+        # Snapshots explicitly tagged "archive" survive the rolling policy.
+        "--keep-tag archive"
         "--keep-daily 7"
         "--keep-weekly 5"
         "--keep-monthly 12"

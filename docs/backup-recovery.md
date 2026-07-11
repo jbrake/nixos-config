@@ -12,11 +12,12 @@ repository:  sftp:restic-jason@10.69.1.164:/restic-jason
 checkout:    /home/jason/Documents/repos/nixos-config
 schedule:    daily, with missed runs started after boot or resume
 retention:   7 daily, 5 weekly, 12 monthly, 3 yearly
+protected:   snapshots tagged archive
 ```
 
-The backup includes documents, Plasma settings, Brave profiles and extensions,
-PrismLauncher instances and Minecraft worlds, Codex sessions, SSH keys, KDE
-Wallet data, and other files under `/home/jason`.
+The backup includes documents, Plasma and GNOME state capsules, Brave profiles
+and extensions, PrismLauncher instances and Minecraft worlds, Codex sessions,
+SSH keys, desktop credential stores, and other files under `/home/jason`.
 
 It excludes:
 
@@ -68,6 +69,14 @@ Run an explicit repository check:
 sudo restic-jason-home check
 ```
 
+Protect an important snapshot from the rolling retention policy:
+
+```bash
+sudo restic-jason-home tag --add archive SNAPSHOT_ID
+```
+
+Use this for deliberate transition points, not routine daily snapshots.
+
 Every scheduled backup also applies the retention policy and runs
 `restic check`. It reads a random 5% of stored pack data on each run so payload
 damage is detected over time. A failed scheduled backup also sends a critical
@@ -79,7 +88,7 @@ and the system journal.
 First commit and push the NixOS repository. Then close Codex and other
 applications so their latest state is written to disk.
 
-1. In Plasma, choose **Leave -> Log Out**.
+1. Log out of Plasma or GNOME from its system menu.
 2. At the graphical login screen, press `Ctrl-Alt-F3`. If the function row is
    in media-key mode, press `Ctrl-Alt-Fn-F3`.
 3. Log in as `jason`. The password remains invisible while typing.
@@ -151,6 +160,10 @@ to decrypt the repository.
 
 ### 1. Install and rebuild NixOS
 
+These commands restore the Plasma profile. To start with GNOME instead, use
+`framework-amd-ai-300-gnome` in both rebuild commands below. Desktop state from
+the backup remains available either way.
+
 Install NixOS with the graphical installer:
 
 ```text
@@ -208,7 +221,7 @@ Do not continue until the snapshots are listed.
 
 ### 4. Restore the home directory from a TTY
 
-1. Log out of Plasma.
+1. Log out of the graphical desktop.
 2. At the graphical login screen, press `Ctrl-Alt-F3` or
    `Ctrl-Alt-Fn-F3` and log in as `jason`.
 3. Stop the graphical login manager:
@@ -244,8 +257,10 @@ sudo nixos-rebuild switch --flake .#framework-amd-ai-300
 sudo reboot
 ```
 
-Log in and check documents, Brave, Plasma, PrismLauncher worlds, SSH keys, and
-other important data. Applications may require authentication again.
+Log in and check documents, Brave, the selected desktop, PrismLauncher worlds,
+SSH keys, and other important data. Applications may require authentication
+again. See [Switching Between Plasma and GNOME](desktop-switching.md) to change
+desktops or perform a clean GNOME migration without restoring Plasma settings.
 
 Only after confirming the restore, remove the temporary copy:
 

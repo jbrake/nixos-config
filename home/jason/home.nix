@@ -4,6 +4,7 @@
   pkgs,
   username,
   hostname,
+  desktop,
   ...
 }:
 
@@ -17,10 +18,9 @@
   programs.home-manager.enable = true;
 
   programs.plasma = {
-    # Only the laptops run Plasma; keep plasma-manager from writing KDE
-    # config into the VM guests' homes (a stray KDE cursor-theme setting
-    # once broke the GNOME VM's cursor).
-    enable = lib.hasPrefix "framework-" hostname;
+    # Keep Plasma Manager completely inactive in GNOME and the other desktop
+    # profiles. A stray KDE cursor-theme setting once broke the GNOME VM.
+    enable = desktop == "plasma";
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
     configFile = {
       "powerdevil.notifyrc" = {
@@ -28,7 +28,7 @@
         "Event\\/unplugged".Action = "";
       };
     }
-    // lib.optionalAttrs (hostname == "framework-amd-ai-300") {
+    // lib.optionalAttrs (desktop == "plasma" && hostname == "framework-amd-ai-300") {
       # These IDs belong to Jason's existing hand-arranged panel. Keep the
       # machine-specific override away from other Plasma installations.
       "plasma-org.kde.plasma.desktop-appletsrc" = {
@@ -52,12 +52,17 @@
       "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
     };
     defaultApplications = {
-      "inode/directory" = "org.kde.dolphin.desktop";
       "text/html" = "brave-browser.desktop";
       "x-scheme-handler/http" = "brave-browser.desktop";
       "x-scheme-handler/https" = "brave-browser.desktop";
       "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
       "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
+    }
+    // lib.optionalAttrs (desktop == "plasma") {
+      "inode/directory" = "org.kde.dolphin.desktop";
+    }
+    // lib.optionalAttrs (desktop == "gnome") {
+      "inode/directory" = "org.gnome.Nautilus.desktop";
     };
   };
   # Desktops and apps rewrite mimeapps.list behind home-manager's back, and
