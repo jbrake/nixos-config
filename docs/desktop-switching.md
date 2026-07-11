@@ -99,14 +99,19 @@ The default enabled extensions are:
 - Blur My Shell for the dock only
 - AppIndicator for application tray icons
 - GSConnect for phone integration
+- Tiling Shell for optional snap layouts and window tiling
+- Clipboard Indicator for searchable clipboard history
+- Vitals for system information in the top panel
+- Caffeine for temporarily preventing screen blanking and suspend
 
-Caffeine is installed but left disabled for optional use in Extension Manager.
-The dock favorites are Brave, Files, Ghostty, Discord, and Steam.
+Each extension can be turned off independently in Extension Manager. Tiling
+Shell also exposes its layouts and behavior from its panel indicator. The dock
+favorites are Brave, Files, Ghostty, Discord, and Steam.
 
 GNOME also starts with centered windows, four workspaces, a weekday clock,
 battery percentage, the purple accent color, window control buttons, disabled
-hot corners, directories sorted first, and Bluefin-style window-switching
-shortcuts.
+hot corners, Files in list view, directories sorted first, and Bluefin-style
+window-switching shortcuts.
 
 The touchpad matches the Plasma defaults where GNOME exposes an equivalent:
 tap-to-click and disable-while-typing are off, natural two-finger scrolling is

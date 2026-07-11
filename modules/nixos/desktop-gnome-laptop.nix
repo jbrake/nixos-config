@@ -13,9 +13,13 @@ let
     dash-to-dock
     gsconnect
   ];
-  optionalExtensions = with pkgs.gnomeExtensions; [
+  productivityExtensions = with pkgs.gnomeExtensions; [
     caffeine
+    clipboard-indicator
+    tiling-shell
+    vitals
   ];
+  enabledExtensions = bluefinCoreExtensions ++ productivityExtensions;
   configuredExtensionSchemas = with pkgs.gnomeExtensions; [
     blur-my-shell
     dash-to-dock
@@ -36,7 +40,7 @@ let
   extensionSchemaPackages = map extensionSchemaPackage configuredExtensionSchemas;
   enabledExtensionUuids = lib.concatMapStringsSep ", " (
     extension: "'${extension.extensionUuid}'"
-  ) bluefinCoreExtensions;
+  ) enabledExtensions;
 in
 {
   services.displayManager.gdm.enable = true;
@@ -51,6 +55,7 @@ in
       pkgs.gtk3
       pkgs.gtk4
       pkgs.mutter
+      pkgs.nautilus
     ]
     ++ extensionSchemaPackages;
     extraGSettingsOverrides = ''
@@ -87,6 +92,9 @@ in
 
       [org.gtk.gtk4.Settings.FileChooser]
       sort-directories-first=true
+
+      [org.gnome.nautilus.preferences]
+      default-folder-viewer='list-view'
 
       [org.gnome.shell.extensions.dash-to-dock]
       dock-position='BOTTOM'
@@ -148,8 +156,7 @@ in
       gnome-extension-manager
       gnome-tweaks
     ]
-    ++ bluefinCoreExtensions
-    ++ optionalExtensions;
+    ++ enabledExtensions;
 
   # GSConnect implements the KDE Connect protocol without running the KDE
   # daemon. These are the same ranges opened by NixOS's KDE Connect module.
