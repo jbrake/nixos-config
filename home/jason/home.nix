@@ -63,6 +63,12 @@
     }
     // lib.optionalAttrs (desktop == "gnome") {
       "inode/directory" = "org.gnome.Nautilus.desktop";
+    }
+    // lib.optionalAttrs (desktop == "cinnamon") {
+      "inode/directory" = "nemo.desktop";
+    }
+    // lib.optionalAttrs (desktop == "cosmic") {
+      "inode/directory" = "com.system76.CosmicFiles.desktop";
     };
   };
   # Desktops and apps rewrite mimeapps.list behind home-manager's back, and

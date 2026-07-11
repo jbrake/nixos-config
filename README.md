@@ -6,13 +6,20 @@ Personal, multi-host NixOS configurations for Framework laptops and disposable
 desktop-environment VMs. The repository uses flakes, Home Manager, small
 role-based modules, and CI to keep the deployed configuration reproducible.
 
-## Hosts
+## Hosts and Profiles
+
+Each Framework exposes the same four desktop profiles. The unsuffixed output
+is Plasma.
+
+| Hardware | Plasma | GNOME | Cinnamon | COSMIC | Status |
+| --- | --- | --- | --- | --- | --- |
+| AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | `framework-amd-ai-300-gnome` | `framework-amd-ai-300-cinnamon` | `framework-amd-ai-300-cosmic` | Deployed; being replaced |
+| Intel Core Ultra Series 3 | `framework-intel-core-ultra` | `framework-intel-core-ultra-gnome` | `framework-intel-core-ultra-cinnamon` | `framework-intel-core-ultra-cosmic` | Planned; guarded hardware placeholder |
+
+Disposable VM profiles remain independent:
 
 | Host | Role | Status |
 | --- | --- | --- |
-| `framework-amd-ai-300` | Framework Laptop 13, AMD Ryzen AI 9 HX 370 | Deployed |
-| `framework-amd-ai-300-gnome` | Same AMD laptop with isolated GNOME state | Available |
-| `framework-intel-core-ultra` | Framework Laptop 13 Pro, Intel Core Ultra Series 3 | Planned; hardware file is a guarded placeholder |
 | `qemu-vm` | GNOME guest under virt-manager | Available |
 | `vm-cosmic` | COSMIC guest | Available |
 | `vm-hyprland` | Hyprland guest | Available |
@@ -25,7 +32,7 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 - `base.nix` contains settings shared by every host.
 - Physical laptops add laptop and virtualization-host roles; guests do not
   inherit laptop firmware, Bluetooth, VPN, or nested libvirt services.
-- Plasma and GNOME laptops share one workstation application module; their
+- All four laptop desktops share one workstation application module; their
   desktop settings are swapped through separate, Restic-backed state capsules.
 - Each VM has one desktop environment to avoid cross-desktop state in `$HOME`.
 - Home Manager owns user tools and selected desktop settings. Machine-specific
@@ -43,8 +50,8 @@ modules/nixos/base.nix                 settings shared by every host
 modules/nixos/laptop.nix               physical-laptop services
 modules/nixos/virtualization-host.nix  libvirt and virt-manager host services
 modules/nixos/workstation-apps.nix     GUI applications shared by laptop desktops
-modules/nixos/desktop-*.nix            Plasma, GNOME, and VM desktop roles
-modules/nixos/desktop-state.nix        Plasma/GNOME state capsule activation
+modules/nixos/desktop-*.nix            reusable laptop and VM desktop roles
+modules/nixos/desktop-state.nix        four-way desktop state activation
 modules/nixos/containers.nix           Podman and Distrobox tooling
 modules/nixos/backup.nix               encrypted Restic backups
 modules/nixos/fingerprint.nix          Framework fingerprint behavior
@@ -53,14 +60,17 @@ scripts/                               install, rebuild, update, and checks
 docs/                                  recovery and hardware-specific notes
 ```
 
-## Install the AMD Laptop
+## Install a Framework Laptop
 
 ### Graphical installer
 
 1. Boot the NixOS Plasma ISO and use the graphical installer.
 2. Current partitioning choices are erase disk, no disk encryption, no disk
    swap, and user `jason`. The configuration enables compressed zram swap.
-3. After the installer reboots, open a terminal and run:
+3. After the installer reboots, open a terminal and run the following. This
+   example targets the incoming Intel laptop; use `framework-amd-ai-300` for
+   both variables on the AMD laptop. Append `-gnome`, `-cinnamon`, or `-cosmic`
+   to `profile` to start with another desktop.
 
    ```bash
    mkdir -p ~/Documents/repos
@@ -68,10 +78,12 @@ docs/                                  recovery and hardware-specific notes
    nix-shell -p git
    git clone https://github.com/jbrake/nixos-config.git
    cd nixos-config
+   hardware=framework-intel-core-ultra
+   profile=framework-intel-core-ultra
    cp /etc/nixos/hardware-configuration.nix \
-     hosts/framework-amd-ai-300/hardware-configuration.nix
+     "hosts/$hardware/hardware-configuration.nix"
    sudo NIX_CONFIG="experimental-features = nix-command flakes" \
-     nixos-rebuild boot --flake .#framework-amd-ai-300
+     nixos-rebuild boot --flake ".#$profile"
    sudo reboot
    ```
 
@@ -85,22 +97,17 @@ For a manually partitioned system already mounted at `/mnt`:
 ```bash
 git clone https://github.com/jbrake/nixos-config.git
 cd nixos-config
-sudo ./scripts/install-host.sh framework-amd-ai-300
+sudo ./scripts/install-host.sh framework-intel-core-ultra
 ```
 
 The script generates the hardware configuration, installs the flake, prompts
 for the real `jason` password, and clones only Git-managed repository content
 to `/home/jason/Documents/repos/nixos-config` on the target system.
 
-The planned Intel configuration stays evaluation-safe for CI, but rebuild and
-update scripts refuse to deploy it while its hardware file contains the
-`INTEL_HARDWARE_PLACEHOLDER` marker. The installer replaces that file before
-building the new laptop.
-
-For a clean GNOME installation on the AMD laptop, use the
-`framework-amd-ai-300-gnome` output and follow
-[Switching Between Plasma and GNOME](docs/desktop-switching.md). The normal
-`framework-amd-ai-300` output remains the deployed Plasma default.
+The Intel configurations stay evaluation-safe for CI, but install, rebuild,
+and update scripts refuse to deploy them while the hardware file contains the
+`INTEL_HARDWARE_PLACEHOLDER` marker. Generating the real hardware configuration
+removes that guard.
 
 ## First Boot
 
@@ -119,9 +126,9 @@ sudo tailscale up
 ```
 
 Application accounts, phone pairing, and display scale remain interactive.
-Home Manager declares shared defaults and the Plasma panel clock override. The
-GNOME profile provides user-overridable Bluefin-inspired defaults; see the
-desktop-switching guide for the extensions, appearance, and touchpad settings.
+Home Manager declares shared defaults and desktop-specific file managers. See
+the desktop-switching guide for GNOME defaults, Cinnamon touchpad behavior,
+COSMIC's evolving settings, and state isolation.
 
 ## Daily Use
 
@@ -131,16 +138,17 @@ Apply the current host configuration:
 ./scripts/rebuild.sh
 ```
 
-Switch to GNOME while preserving a separate Plasma state:
+Switch desktops while preserving separate state for each one:
 
 ```bash
 sudo ./scripts/switch-desktop.sh gnome
+sudo ./scripts/switch-desktop.sh cinnamon
+sudo ./scripts/switch-desktop.sh cosmic
 ```
 
 Use the same command with `plasma` to return. Personal files and application
-profiles stay shared; see the desktop-switching guide for capsule behavior and
-optional backup/reboot flags. Normal rebuild and update commands retain the
-active desktop profile.
+profiles stay shared; normal rebuild and update commands retain the active
+hardware and desktop profile.
 
 Update inputs, prove the new system builds, and switch only after success:
 
@@ -169,7 +177,7 @@ Run the same lint, formatting, link, and secret checks used by CI:
 nix develop --command ./scripts/check.sh
 ```
 
-Evaluate every host and build both AMD desktop configurations:
+Evaluate every host and build all four AMD desktop configurations:
 
 ```bash
 nix flake check --print-build-logs
@@ -181,7 +189,7 @@ and new system generations.
 ## Additional Documentation
 
 - [Backup and full recovery](docs/backup-recovery.md)
-- [Switching between Plasma and GNOME](docs/desktop-switching.md)
+- [Switching desktop environments](docs/desktop-switching.md)
 - [VM guest setup](docs/vm-guests.md)
 - [Fingerprint behavior](docs/fingerprint.md)
 - [Hardware notes](docs/hardware.md)

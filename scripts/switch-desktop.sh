@@ -11,7 +11,7 @@ reboot=false
 
 usage() {
   cat <<EOF
-Usage: sudo $0 <plasma|gnome> [--backup] [--reboot]
+Usage: sudo $0 <plasma|gnome|cinnamon|cosmic> [--backup] [--reboot]
 
   --backup  Wait for a Restic home backup before scheduling the switch.
   --reboot  Reboot immediately after the target system builds.
@@ -51,14 +51,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$target" in
-  plasma)
-    target_profile="framework-amd-ai-300"
-    ;;
-  gnome)
-    target_profile="framework-amd-ai-300-gnome"
-    ;;
+  plasma | gnome | cinnamon | cosmic) ;;
   *)
-    echo "Desktop must be 'plasma' or 'gnome'." >&2
+    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', or 'cosmic'." >&2
     exit 1
     ;;
 esac
@@ -68,23 +63,39 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
-if [[ "$(hostname)" != "framework-amd-ai-300" ]]; then
-  echo "Desktop switching is currently configured only for framework-amd-ai-300." >&2
-  exit 1
+host="$(hostname)"
+case "$host" in
+  framework-amd-ai-300 | framework-intel-core-ultra) ;;
+  *)
+    echo "Desktop switching is configured only for the Framework laptop profiles." >&2
+    exit 1
+    ;;
+esac
+
+if [[ "$target" == "plasma" ]]; then
+  target_profile="$host"
+else
+  target_profile="$host-$target"
 fi
 
 if [[ ! -r /etc/nixos-config-profile ]]; then
-  echo "Missing /etc/nixos-config-profile. Apply the current Plasma configuration first." >&2
+  echo "Missing /etc/nixos-config-profile. Apply the current configuration first." >&2
   exit 1
 fi
 
 current_profile="$(</etc/nixos-config-profile)"
 case "$current_profile" in
-  framework-amd-ai-300)
+  "$host")
     current="plasma"
     ;;
-  framework-amd-ai-300-gnome)
+  "$host-gnome")
     current="gnome"
+    ;;
+  "$host-cinnamon")
+    current="cinnamon"
+    ;;
+  "$host-cosmic")
+    current="cosmic"
     ;;
   *)
     echo "Unsupported active profile: $current_profile" >&2

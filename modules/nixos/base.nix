@@ -25,8 +25,8 @@
   networking.networkmanager.enable = true;
   networking.firewall.enable = true;
 
-  # The flake output can differ from the network hostname (for example the
-  # AMD GNOME alternative). Helper scripts use this to retain that selection.
+  # A desktop profile's flake output can differ from the network hostname.
+  # Helper scripts use this marker to retain the selected hardware/desktop.
   environment.etc."nixos-config-profile".text = "${profile}\n";
 
   time.timeZone = "America/Denver";
