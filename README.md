@@ -11,6 +11,7 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 | Host | Role | Status |
 | --- | --- | --- |
 | `framework-amd-ai-300` | Framework Laptop 13, AMD Ryzen AI 9 HX 370 | Deployed |
+| `framework-amd-ai-300-gnome` | Same AMD laptop with isolated GNOME state | Available |
 | `framework-intel-core-ultra` | Framework Laptop 13 Pro, Intel Core Ultra Series 3 | Planned; hardware file is a guarded placeholder |
 | `qemu-vm` | GNOME guest under virt-manager | Available |
 | `vm-cosmic` | COSMIC guest | Available |
@@ -24,6 +25,8 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 - `base.nix` contains settings shared by every host.
 - Physical laptops add laptop and virtualization-host roles; guests do not
   inherit laptop firmware, Bluetooth, VPN, or nested libvirt services.
+- Plasma and GNOME laptops share one workstation application module; their
+  desktop settings are swapped through separate, Restic-backed state capsules.
 - Each VM has one desktop environment to avoid cross-desktop state in `$HOME`.
 - Home Manager owns user tools and selected desktop settings. Machine-specific
   Plasma panel IDs are restricted to the deployed AMD host.
@@ -39,7 +42,9 @@ hosts/<host>/hardware-configuration.nix generated or guarded placeholder
 modules/nixos/base.nix                 settings shared by every host
 modules/nixos/laptop.nix               physical-laptop services
 modules/nixos/virtualization-host.nix  libvirt and virt-manager host services
-modules/nixos/desktop-*.nix            one desktop role per host
+modules/nixos/workstation-apps.nix     GUI applications shared by laptop desktops
+modules/nixos/desktop-*.nix            Plasma, GNOME, and VM desktop roles
+modules/nixos/desktop-state.nix        Plasma/GNOME state capsule activation
 modules/nixos/containers.nix           Podman and Distrobox tooling
 modules/nixos/backup.nix               encrypted Restic backups
 modules/nixos/fingerprint.nix          Framework fingerprint behavior
@@ -92,6 +97,11 @@ update scripts refuse to deploy it while its hardware file contains the
 `INTEL_HARDWARE_PLACEHOLDER` marker. The installer replaces that file before
 building the new laptop.
 
+For a clean GNOME installation on the AMD laptop, use the
+`framework-amd-ai-300-gnome` output and follow
+[Switching Between Plasma and GNOME](docs/desktop-switching.md). The normal
+`framework-amd-ai-300` output remains the deployed Plasma default.
+
 ## First Boot
 
 Set the writable Git remote:
@@ -108,10 +118,10 @@ fprintd-enroll jason
 sudo tailscale up
 ```
 
-Application accounts, KDE Connect pairing, display scale, and the Plasma panel
-layout remain interactive. Home Manager declares the theme, default browser,
-file manager, terminal, 24-hour clock override for the AMD panel, and selected
-application settings.
+Application accounts, phone pairing, and display scale remain interactive.
+Home Manager declares shared defaults and the Plasma panel clock override. The
+GNOME profile provides user-overridable Bluefin-inspired defaults; see the
+desktop-switching guide for the extensions, appearance, and touchpad settings.
 
 ## Daily Use
 
@@ -120,6 +130,17 @@ Apply the current host configuration:
 ```bash
 ./scripts/rebuild.sh
 ```
+
+Switch to GNOME while preserving a separate Plasma state:
+
+```bash
+sudo ./scripts/switch-desktop.sh gnome
+```
+
+Use the same command with `plasma` to return. Personal files and application
+profiles stay shared; see the desktop-switching guide for capsule behavior and
+optional backup/reboot flags. Normal rebuild and update commands retain the
+active desktop profile.
 
 Update inputs, prove the new system builds, and switch only after success:
 
@@ -148,7 +169,7 @@ Run the same lint, formatting, link, and secret checks used by CI:
 nix develop --command ./scripts/check.sh
 ```
 
-Evaluate every host and build the deployed AMD configuration:
+Evaluate every host and build both AMD desktop configurations:
 
 ```bash
 nix flake check --print-build-logs
@@ -160,6 +181,7 @@ and new system generations.
 ## Additional Documentation
 
 - [Backup and full recovery](docs/backup-recovery.md)
+- [Switching between Plasma and GNOME](docs/desktop-switching.md)
 - [VM guest setup](docs/vm-guests.md)
 - [Fingerprint behavior](docs/fingerprint.md)
 - [Hardware notes](docs/hardware.md)

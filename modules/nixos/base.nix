@@ -3,6 +3,7 @@
   pkgs,
   username,
   hostname,
+  profile,
   ...
 }:
 
@@ -23,6 +24,10 @@
   networking.hostName = hostname;
   networking.networkmanager.enable = true;
   networking.firewall.enable = true;
+
+  # The flake output can differ from the network hostname (for example the
+  # AMD GNOME alternative). Helper scripts use this to retain that selection.
+  environment.etc."nixos-config-profile".text = "${profile}\n";
 
   time.timeZone = "America/Denver";
   i18n.defaultLocale = "en_US.UTF-8";

@@ -44,6 +44,8 @@
       mkHost =
         {
           hostname,
+          desktop,
+          profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
           # Per-host modules: nixos-hardware profile, fingerprint reader,
@@ -54,7 +56,13 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
-            inherit inputs username hostname;
+            inherit
+              inputs
+              username
+              hostname
+              desktop
+              profile
+              ;
           };
           modules = extraModules ++ [
             ./modules/nixos/base.nix
@@ -67,7 +75,12 @@
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
-                inherit inputs username hostname;
+                inherit
+                  inputs
+                  username
+                  hostname
+                  desktop
+                  ;
               };
               home-manager.users.${username} = import homeModule;
             }
@@ -77,15 +90,27 @@
       mkLaptopHost =
         {
           hostname,
+          desktop,
+          desktopModule,
+          profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
           extraModules ? [ ],
         }:
         mkHost {
-          inherit hostname username homeModule;
+          inherit
+            hostname
+            desktop
+            profile
+            username
+            homeModule
+            ;
           extraModules = [
             ./modules/nixos/laptop.nix
             ./modules/nixos/virtualization-host.nix
+            ./modules/nixos/workstation-apps.nix
+            ./modules/nixos/desktop-state.nix
+            desktopModule
           ]
           ++ extraModules;
         };
@@ -94,9 +119,14 @@
       # desktop environment, because desktops sharing an install (or a
       # $HOME) contaminate each other's cursors, fonts, and settings.
       mkVmHost =
-        { hostname, desktopModule }:
+        {
+          hostname,
+          desktop,
+          desktopModule,
+          profile ? hostname,
+        }:
         mkHost {
-          inherit hostname;
+          inherit hostname desktop profile;
           extraModules = [
             ./modules/nixos/vm-guest.nix
             desktopModule
@@ -107,9 +137,31 @@
       nixosConfigurations = {
         framework-amd-ai-300 = mkLaptopHost {
           hostname = "framework-amd-ai-300";
+          desktop = "plasma";
+          desktopModule = ./modules/nixos/desktop-plasma.nix;
           extraModules = [
             "${nixos-hardware}/framework/13-inch/amd-ai-300-series"
-            ./modules/nixos/desktop-plasma.nix
+            ./modules/nixos/fingerprint.nix
+            {
+              jbrake.resticBackup = {
+                enable = true;
+                nasUser = "restic-jason";
+                nasShare = "restic-jason";
+              };
+            }
+          ];
+        };
+
+        # A clean GNOME alternative for the same physical machine. The output
+        # name differs, but networking.hostName and the hardware module remain
+        # those of framework-amd-ai-300.
+        framework-amd-ai-300-gnome = mkLaptopHost {
+          hostname = "framework-amd-ai-300";
+          desktop = "gnome";
+          profile = "framework-amd-ai-300-gnome";
+          desktopModule = ./modules/nixos/desktop-gnome-laptop.nix;
+          extraModules = [
+            "${nixos-hardware}/framework/13-inch/amd-ai-300-series"
             ./modules/nixos/fingerprint.nix
             {
               jbrake.resticBackup = {
@@ -123,9 +175,10 @@
 
         framework-intel-core-ultra = mkLaptopHost {
           hostname = "framework-intel-core-ultra";
+          desktop = "plasma";
+          desktopModule = ./modules/nixos/desktop-plasma.nix;
           extraModules = [
             "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3"
-            ./modules/nixos/desktop-plasma.nix
             ./modules/nixos/fingerprint.nix
           ];
         };
@@ -134,21 +187,25 @@
         # hostname is baked in, and rebuild.sh matches on hostname.
         qemu-vm = mkVmHost {
           hostname = "qemu-vm";
+          desktop = "gnome";
           desktopModule = ./modules/nixos/desktop-gnome.nix;
         };
 
         vm-cosmic = mkVmHost {
           hostname = "vm-cosmic";
+          desktop = "cosmic";
           desktopModule = ./modules/nixos/desktop-cosmic.nix;
         };
 
         vm-hyprland = mkVmHost {
           hostname = "vm-hyprland";
+          desktop = "hyprland";
           desktopModule = ./modules/nixos/desktop-hyprland.nix;
         };
 
         vm-cinnamon = mkVmHost {
           hostname = "vm-cinnamon";
+          desktop = "cinnamon";
           desktopModule = ./modules/nixos/desktop-cinnamon.nix;
         };
       };
@@ -165,9 +222,12 @@
         ];
       };
 
-      # Build the deployed laptop in CI. Nix also evaluates every exported
-      # nixosConfiguration during `nix flake check`.
-      checks.${system}.framework-amd-ai-300 =
-        self.nixosConfigurations.framework-amd-ai-300.config.system.build.toplevel;
+      # Build both physical-laptop desktop profiles in CI. Nix also evaluates
+      # every exported nixosConfiguration during `nix flake check`.
+      checks.${system} = {
+        framework-amd-ai-300 = self.nixosConfigurations.framework-amd-ai-300.config.system.build.toplevel;
+        framework-amd-ai-300-gnome =
+          self.nixosConfigurations.framework-amd-ai-300-gnome.config.system.build.toplevel;
+      };
     };
 }
