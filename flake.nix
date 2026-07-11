@@ -58,6 +58,7 @@
           };
           modules = extraModules ++ [
             ./modules/nixos/base.nix
+            ./modules/nixos/backup.nix
             ./modules/nixos/containers.nix
             ./hosts/${hostname}/configuration.nix
             home-manager.nixosModules.home-manager
@@ -94,6 +95,13 @@
             "${nixos-hardware}/framework/13-inch/amd-ai-300-series"
             ./modules/nixos/desktop-plasma.nix
             ./modules/nixos/fingerprint.nix
+            {
+              jbrake.resticBackup = {
+                enable = true;
+                nasUser = "restic-jason";
+                nasShare = "restic-jason";
+              };
+            }
           ];
         };
 
