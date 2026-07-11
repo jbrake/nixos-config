@@ -27,7 +27,7 @@ fi
 host="$1"
 target_root="${2:-/mnt}"
 hardware_file="$repo_root/hosts/$host/hardware-configuration.nix"
-target_repo="$target_root/home/$target_user/Projects/nixos-config"
+target_repo="$target_root/home/$target_user/Documents/repos/nixos-config"
 flake_ref="path:$repo_root#$host"
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -57,13 +57,14 @@ if ! command -v nix >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! findmnt --target "$target_root" >/dev/null 2>&1; then
-  echo "$target_root is not a mount point. Mount your target root filesystem first." >&2
+if ! command -v nixos-enter >/dev/null 2>&1; then
+  echo "nixos-enter is not available. Run this from a NixOS installer ISO." >&2
   exit 1
 fi
 
-if [[ -f "$hardware_file" ]]; then
-  cp -a "$hardware_file" "$hardware_file.bak"
+if ! findmnt --target "$target_root" >/dev/null 2>&1; then
+  echo "$target_root is not a mount point. Mount your target root filesystem first." >&2
+  exit 1
 fi
 
 echo "Generating hardware configuration for $host from $target_root"
@@ -75,18 +76,27 @@ nix --extra-experimental-features "nix-command flakes" flake lock --flake "path:
 echo "Installing NixOS flake: $flake_ref"
 nixos-install --root "$target_root" --flake "$flake_ref" --no-root-passwd
 
-echo "Copying generated repo to $target_repo"
-mkdir -p "$(dirname -- "$target_repo")"
+echo "Set the login password for $target_user"
+nixos-enter --root "$target_root" -c "passwd $target_user"
 
-if [[ -d "$target_repo" && "$(readlink -f "$target_repo")" == "$(readlink -f "$repo_root")" ]]; then
-  echo "Repo is already at $target_repo"
-else
-  mkdir -p "$target_repo"
-  cp -a "$repo_root/." "$target_repo/"
+echo "Copying generated repo to $target_repo"
+install -d -m 755 -o 1000 -g 100 "$(dirname -- "$target_repo")"
+
+if [[ -e "$target_repo" ]]; then
+  echo "Refusing to overwrite existing target: $target_repo" >&2
+  exit 1
 fi
 
-chown 1000:100 "$target_root/home/$target_user" "$target_root/home/$target_user/Projects"
+git clone --no-hardlinks "$repo_root" "$target_repo"
+install -m 644 "$hardware_file" "$target_repo/hosts/$host/hardware-configuration.nix"
+install -m 644 "$repo_root/flake.lock" "$target_repo/flake.lock"
+
+if origin_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null)"; then
+  git -C "$target_repo" remote set-url origin "$origin_url"
+fi
+
+chown 1000:100 "$target_root/home/$target_user" "$target_root/home/$target_user/Documents" "$target_root/home/$target_user/Documents/repos"
 chown -R 1000:100 "$target_repo"
 
-echo "Install finished. Reboot, log in as $target_user with password 'changeme', then run passwd."
-echo "Your generated config repo will be at /home/$target_user/Projects/nixos-config."
+echo "Install finished. Your generated config repo will be at:"
+echo "/home/$target_user/Documents/repos/nixos-config"

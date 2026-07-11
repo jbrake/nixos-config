@@ -22,13 +22,18 @@
     # once broke the GNOME VM's cursor).
     enable = lib.hasPrefix "framework-" hostname;
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
-    configFile."powerdevil.notifyrc" = {
-      "Event\\/pluggedin".Action = "";
-      "Event\\/unplugged".Action = "";
-    };
-    # Keep the existing, manually arranged panel; only manage its clock format.
-    configFile."plasma-org.kde.plasma.desktop-appletsrc" = {
-      "Containments][25][Applets][43][Configuration][Appearance".use24hFormat = 2;
+    configFile = {
+      "powerdevil.notifyrc" = {
+        "Event\\/pluggedin".Action = "";
+        "Event\\/unplugged".Action = "";
+      };
+    }
+    // lib.optionalAttrs (hostname == "framework-amd-ai-300") {
+      # These IDs belong to Jason's existing hand-arranged panel. Keep the
+      # machine-specific override away from other Plasma installations.
+      "plasma-org.kde.plasma.desktop-appletsrc" = {
+        "Containments][25][Applets][43][Configuration][Appearance".use24hFormat = 2;
+      };
     };
   };
 

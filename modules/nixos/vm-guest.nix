@@ -1,4 +1,10 @@
-{ pkgs, username, modulesPath, ... }:
+{
+  lib,
+  pkgs,
+  username,
+  modulesPath,
+  ...
+}:
 
 # Shared plumbing for QEMU/KVM guests run under virt-manager on the
 # laptops. Pair this with one desktop-*.nix module per VM; see the
@@ -15,6 +21,13 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Desktop modules may enable laptop-oriented dependencies by default. Guests
+  # have no battery or Bluetooth hardware and do not need host update services.
+  hardware.bluetooth.enable = lib.mkForce false;
+  services.fwupd.enable = lib.mkForce false;
+  services.upower.enable = lib.mkForce false;
+  services.power-profiles-daemon.enable = lib.mkForce false;
+
   # Sandbox VMs don't need the full name on their login screens.
   users.users.${username}.description = "Jason";
 
@@ -23,12 +36,21 @@
   # Clipboard sharing and display auto-resize over SPICE.
   services.spice-vdagentd.enable = true;
 
+  # The user unit below is the single session-agent owner. Mask the package's
+  # XDG autostart entry so desktops that still honor it cannot start a second
+  # agent and create a restart loop.
+  environment.etc."xdg/autostart/spice-vdagent.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=SPICE vdagent (managed by systemd)
+    Hidden=true
+  '';
+
   # The session half of the agent normally starts via its XDG autostart
   # file, but GNOME dropped support for entries that set
   # X-GNOME-Autostart-Phase (spice-vdagent's still does), so it never
   # launches and resize/clipboard silently don't work. Run it as a user
-  # unit instead. Harmless on desktops whose autostart still works: the
-  # duplicate agent loses the vdagentd handshake and exits.
+  # unit instead.
   systemd.user.services.spice-vdagent = {
     description = "SPICE guest session agent";
     wantedBy = [ "graphical-session.target" ];

@@ -11,11 +11,18 @@ fi
 
 host="${1:-$default_host}"
 flake_ref="path:$repo_root#$host"
+hardware_file="$repo_root/hosts/$host/hardware-configuration.nix"
 
 if [[ ! -d "$repo_root/hosts/$host" ]]; then
   echo "Unknown host: $host" >&2
   echo "Available hosts:" >&2
   find "$repo_root/hosts" -mindepth 1 -maxdepth 1 -type d -printf '  %f\n' >&2
+  exit 1
+fi
+
+if grep -q 'INTEL_HARDWARE_PLACEHOLDER' "$hardware_file"; then
+  echo "Refusing to rebuild $host with its placeholder hardware configuration." >&2
+  echo "Replace $hardware_file with nixos-generate-config output first." >&2
   exit 1
 fi
 
