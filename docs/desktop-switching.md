@@ -24,6 +24,20 @@ desktop-sensitive state in separate capsules:
 The capsules are root-owned and are included in the existing encrypted Restic
 home backup.
 
+## Local Capsules and Restic
+
+These are two separate safety layers:
+
+| Local desktop capsule | Restic backup |
+| --- | --- |
+| Runs automatically during every completed desktop switch | Runs daily or when switching with `--backup` |
+| Saves desktop-sensitive settings | Saves nearly the entire home directory |
+| Keeps the latest state for each desktop | Keeps historical snapshots |
+| Stays on the laptop for quick switching | Is encrypted and stored on the NAS for recovery |
+
+A normal switch does not contact the NAS. Restic does not control desktop
+switching; it also backs up the local capsules during the next home snapshot.
+
 ## First-Time Setup
 
 Apply the current configuration once before the first switch:
@@ -45,9 +59,14 @@ sudo ./scripts/switch-desktop.sh cinnamon
 sudo ./scripts/switch-desktop.sh cosmic
 ```
 
-Close applications and reboot normally. Before the target display manager
-starts, the service saves the current desktop state and restores the target's
-last capsule. A desktop starts clean the first time.
+A normal switch follows this sequence:
+
+1. Build the target desktop for the next boot without changing the live session.
+2. Close applications and reboot normally.
+3. Save the current desktop's local capsule before graphical login starts.
+4. Restore the target's latest capsule, or start it clean on its first use.
+
+Personal files and shared application profiles remain in place throughout.
 
 Return to the last Plasma state:
 

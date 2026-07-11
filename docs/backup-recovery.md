@@ -19,6 +19,11 @@ The backup includes documents, all four desktop state capsules, Brave profiles
 and extensions, PrismLauncher instances and Minecraft worlds, Codex sessions,
 SSH keys, desktop credential stores, and other files under `/home/jason`.
 
+Desktop capsules and Restic serve different purposes. Capsules automatically
+preserve each desktop's latest local state during switching; Restic keeps
+historical home snapshots on the NAS for reinstallations and disaster recovery.
+See [Switching Desktop Environments](desktop-switching.md) for the short workflow.
+
 It excludes:
 
 ```text
