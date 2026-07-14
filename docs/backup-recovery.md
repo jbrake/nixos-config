@@ -15,7 +15,7 @@ retention:   7 daily, 5 weekly, 12 monthly, 3 yearly
 protected:   snapshots tagged archive
 ```
 
-The backup includes documents, all four desktop state capsules, Brave profiles
+The backup includes documents, all five desktop state capsules, Brave profiles
 and extensions, PrismLauncher instances and Minecraft worlds, Codex sessions,
 SSH keys, desktop credential stores, and other files under `/home/jason`.
 
@@ -171,7 +171,7 @@ laptop before it is sold.
    [final logged-out backup](#final-backup-before-reinstalling) on the AMD
    laptop.
 2. Install the Intel laptop using `framework-intel-core-ultra`, optionally with
-   the `-gnome`, `-cinnamon`, or `-cosmic` suffix.
+   the `-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` suffix.
 3. Follow the full recovery below. Generate a new Intel SSH key and use the DSM
    task to replace the old AMD key.
 4. Restore the latest AMD snapshot and verify important data.
@@ -183,9 +183,10 @@ laptop before it is sold.
 ### 1. Install and rebuild NixOS
 
 The example commands target the replacement Intel laptop with Plasma. Append
-`-gnome`, `-cinnamon`, or `-cosmic` to `profile` to start elsewhere. For the AMD
-laptop, set both variables to `framework-amd-ai-300`. Desktop state from the
-backup remains available regardless of the starting profile.
+`-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` to `profile` to start
+elsewhere. For the AMD laptop, set both variables to `framework-amd-ai-300`.
+Desktop state from the backup remains available regardless of the starting
+profile.
 
 Install NixOS with the graphical installer:
 

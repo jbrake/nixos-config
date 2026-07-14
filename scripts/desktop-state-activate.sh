@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target="${1:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic> <home> [owner] [group]}"
-home="${2:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic> <home> [owner] [group]}"
+target="${1:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland> <home> [owner] [group]}"
+home="${2:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland> <home> [owner] [group]}"
 owner="${3:-jason}"
 group="${4:-users}"
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland) ;;
   *)
     echo "Unsupported desktop state target: $target" >&2
     exit 1
@@ -47,7 +47,7 @@ fi
 
 current="$(<"$marker")"
 case "$current" in
-  plasma | gnome | cinnamon | cosmic) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland) ;;
   *)
     echo "Invalid desktop state marker: $current" >&2
     exit 1
@@ -102,6 +102,8 @@ collect_paths() {
     ".config/dconf" \
     ".config/gtk-3.0" \
     ".config/gtk-4.0" \
+    ".config/caelestia/shell-tokens.json" \
+    ".config/hypr/scheme" \
     ".config/monitors.xml" \
     ".config/xsettingsd" \
     ".local/share/icons" \
@@ -153,6 +155,7 @@ collect_paths() {
     "dolphin" \
     "evolution" \
     "gnome-shell" \
+    "hypr*" \
     "gvfs-metadata" \
     "kactivitymanagerd" \
     "kate" \
@@ -167,12 +170,15 @@ collect_paths() {
     "kxmlgui*" \
     "nautilus" \
     "nemo*" \
+    "caelestia*" \
     "plasma*" \
     "sddm"
 
   collect_named_children ".local/state" \
+    "caelestia*" \
     "cinnamon*" \
-    "cosmic*"
+    "cosmic*" \
+    "hypr*"
 }
 
 save_current_state() {
@@ -223,7 +229,8 @@ restore_state() {
 clear_desktop_caches() {
   [[ -d "$home/.cache" ]] || return 0
   find "$home/.cache" -mindepth 1 -maxdepth 1 \
-    \( -name 'cinnamon*' -o -name 'cosmic*' -o -name 'gnome-shell*' \
+    \( -name 'caelestia*' -o -name 'cinnamon*' -o -name 'cosmic*' \
+    -o -name 'gnome-shell*' -o -name 'hypr*' -o -name 'quickshell*' \
     -o -name 'gtk-*' -o -name 'ksycoca*' -o -name 'kwin*' \
     -o -name 'nemo*' -o -name 'plasma*' \) -exec rm -rf -- {} +
 }

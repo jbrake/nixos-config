@@ -37,6 +37,7 @@
     su.fprintAuth = false;
     sddm.fprintAuth = false;
     sddm-greeter.fprintAuth = false;
+    hyprlock.fprintAuth = false;
     # Keeps GUI polkit dialogs from blocking on a scan (nixpkgs #171136).
     "polkit-1".fprintAuth = false;
   };

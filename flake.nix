@@ -17,6 +17,13 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    # Polished Hyprland shell with a native Home Manager module. It follows
+    # the system package set so Hyprland, Quickshell, and portals stay aligned.
+    caelestia-shell = {
+      url = "github:caelestia-dots/shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # AI CLIs come from dedicated, independently pinned flakes because they
@@ -139,6 +146,7 @@
         gnome = ./modules/nixos/desktop-gnome-laptop.nix;
         cinnamon = ./modules/nixos/desktop-cinnamon-laptop.nix;
         cosmic = ./modules/nixos/desktop-cosmic-laptop.nix;
+        hyprland = ./modules/nixos/desktop-hyprland-laptop.nix;
       };
 
       mkFrameworkLaptopProfiles =

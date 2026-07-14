@@ -8,13 +8,13 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 
 ## Hosts and Profiles
 
-Each Framework exposes the same four desktop profiles. The unsuffixed output
+Each Framework exposes the same five desktop profiles. The unsuffixed output
 is Plasma.
 
-| Hardware | Plasma | GNOME | Cinnamon | COSMIC | Status |
-| --- | --- | --- | --- | --- | --- |
-| AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | `framework-amd-ai-300-gnome` | `framework-amd-ai-300-cinnamon` | `framework-amd-ai-300-cosmic` | Deployed; being replaced |
-| Intel Core Ultra Series 3 | `framework-intel-core-ultra` | `framework-intel-core-ultra-gnome` | `framework-intel-core-ultra-cinnamon` | `framework-intel-core-ultra-cosmic` | Planned; guarded hardware placeholder |
+| Hardware | Plasma | GNOME | Cinnamon | COSMIC | Hyprland | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | `framework-amd-ai-300-gnome` | `framework-amd-ai-300-cinnamon` | `framework-amd-ai-300-cosmic` | `framework-amd-ai-300-hyprland` | Deployed; being replaced |
+| Intel Core Ultra Series 3 | `framework-intel-core-ultra` | `framework-intel-core-ultra-gnome` | `framework-intel-core-ultra-cinnamon` | `framework-intel-core-ultra-cosmic` | `framework-intel-core-ultra-hyprland` | Planned; guarded hardware placeholder |
 
 Disposable VM profiles remain independent:
 
@@ -27,12 +27,12 @@ Disposable VM profiles remain independent:
 
 ## Design
 
-- `flake.lock` pins Nixpkgs, Home Manager, Plasma Manager, hardware profiles,
-  and the two AI CLI package sources.
+- `flake.lock` pins Nixpkgs, Home Manager, Plasma Manager, Caelestia, hardware
+  profiles, and the two AI CLI package sources.
 - `base.nix` contains settings shared by every host.
 - Physical laptops add laptop and virtualization-host roles; guests do not
   inherit laptop firmware, Bluetooth, VPN, or nested libvirt services.
-- All four laptop desktops share one workstation application module; their
+- All five laptop desktops share one workstation application module; their
   desktop settings are swapped through separate, Restic-backed state capsules.
 - Each VM has one desktop environment to avoid cross-desktop state in `$HOME`.
 - Home Manager owns user tools and selected desktop settings. Machine-specific
@@ -51,7 +51,7 @@ modules/nixos/laptop.nix               physical-laptop services
 modules/nixos/virtualization-host.nix  libvirt and virt-manager host services
 modules/nixos/workstation-apps.nix     GUI applications shared by laptop desktops
 modules/nixos/desktop-*.nix            reusable laptop and VM desktop roles
-modules/nixos/desktop-state.nix        four-way desktop state activation
+modules/nixos/desktop-state.nix        five-way desktop state activation
 modules/nixos/containers.nix           Podman and Distrobox tooling
 modules/nixos/backup.nix               encrypted Restic backups
 modules/nixos/fingerprint.nix          Framework fingerprint behavior
@@ -69,8 +69,8 @@ docs/                                  recovery and hardware-specific notes
    swap, and user `jason`. The configuration enables compressed zram swap.
 3. After the installer reboots, open a terminal and run the following. This
    example targets the incoming Intel laptop; use `framework-amd-ai-300` for
-   both variables on the AMD laptop. Append `-gnome`, `-cinnamon`, or `-cosmic`
-   to `profile` to start with another desktop.
+   both variables on the AMD laptop. Append `-gnome`, `-cinnamon`, `-cosmic`,
+   or `-hyprland` to `profile` to start with another desktop.
 
    ```bash
    mkdir -p ~/Documents/repos
@@ -128,7 +128,7 @@ sudo tailscale up
 Application accounts, phone pairing, and display scale remain interactive.
 Home Manager declares shared defaults and desktop-specific file managers. See
 the desktop-switching guide for GNOME defaults, Cinnamon touchpad behavior,
-COSMIC's evolving settings, and state isolation.
+COSMIC's evolving settings, Hyprland shortcuts and theming, and state isolation.
 
 ## Daily Use
 
@@ -144,6 +144,7 @@ Switch desktops while preserving separate state for each one:
 sudo ./scripts/switch-desktop.sh gnome
 sudo ./scripts/switch-desktop.sh cinnamon
 sudo ./scripts/switch-desktop.sh cosmic
+sudo ./scripts/switch-desktop.sh hyprland
 ```
 
 Use the same command with `plasma` to return. Personal files and application
@@ -178,7 +179,7 @@ Run the same lint, formatting, link, and secret checks used by CI:
 nix develop --command ./scripts/check.sh
 ```
 
-Evaluate every host and build all four AMD desktop configurations:
+Evaluate every host and build all five AMD desktop configurations:
 
 ```bash
 nix flake check --print-build-logs

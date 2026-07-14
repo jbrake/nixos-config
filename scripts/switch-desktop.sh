@@ -11,7 +11,7 @@ reboot=false
 
 usage() {
   cat <<EOF
-Usage: sudo $0 <plasma|gnome|cinnamon|cosmic> [--backup] [--reboot]
+Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland> [--backup] [--reboot]
 
   --backup  Wait for a Restic home backup before scheduling the switch.
   --reboot  Reboot immediately after the target system builds.
@@ -51,9 +51,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland) ;;
   *)
-    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', or 'cosmic'." >&2
+    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', or 'hyprland'." >&2
     exit 1
     ;;
 esac
@@ -96,6 +96,9 @@ case "$current_profile" in
     ;;
   "$host-cosmic")
     current="cosmic"
+    ;;
+  "$host-hyprland")
+    current="hyprland"
     ;;
   *)
     echo "Unsupported active profile: $current_profile" >&2
