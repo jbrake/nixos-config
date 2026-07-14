@@ -45,7 +45,6 @@
 
   environment.systemPackages = with pkgs; [
     alacritty
-    bottles
     brave
     calibre
     capitaine-cursors
