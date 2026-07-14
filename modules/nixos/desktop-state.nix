@@ -27,6 +27,7 @@ in
         "gnome"
         "cinnamon"
         "cosmic"
+        "hyprland"
       ];
       message = "Unsupported laptop desktop state capsule: ${desktop}";
     }

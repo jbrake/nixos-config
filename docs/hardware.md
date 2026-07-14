@@ -18,6 +18,7 @@ evaluation-only placeholder. `scripts/install-host.sh` will generate and store
 the real hardware configuration before the first installation.
 
 It is the replacement for the AMD laptop and exposes the same Plasma, GNOME,
-Cinnamon, and COSMIC profiles. All use the shared workstation configuration and
-encrypted Restic repository. The Intel laptop receives a new NAS SSH key; after
-its first verified backup, the AMD laptop can be erased for sale.
+Cinnamon, COSMIC, and Hyprland profiles. All use the shared workstation
+configuration and encrypted Restic repository. The Intel laptop receives a new
+NAS SSH key; after its first verified backup, the AMD laptop can be erased for
+sale.

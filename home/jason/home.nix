@@ -8,8 +8,22 @@
   ...
 }:
 
+let
+  isLaptopHyprland =
+    desktop == "hyprland"
+    && builtins.elem hostname [
+      "framework-amd-ai-300"
+      "framework-intel-core-ultra"
+    ];
+in
 {
-  imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
+  imports = [
+    inputs.plasma-manager.homeModules.plasma-manager
+  ]
+  ++ lib.optionals isLaptopHyprland [
+    inputs.caelestia-shell.homeManagerModules.default
+    ./hyprland.nix
+  ];
 
   home.username = username;
   home.homeDirectory = "/home/${username}";
@@ -69,6 +83,9 @@
     }
     // lib.optionalAttrs (desktop == "cosmic") {
       "inode/directory" = "com.system76.CosmicFiles.desktop";
+    }
+    // lib.optionalAttrs isLaptopHyprland {
+      "inode/directory" = "org.gnome.Nautilus.desktop";
     };
   };
   # Desktops and apps rewrite mimeapps.list behind home-manager's back, and
@@ -92,6 +109,9 @@
     '';
     interactiveShellInit = ''
       set -g fish_greeting
+    ''
+    + lib.optionalString isLaptopHyprland ''
+      test -r ~/.local/state/caelestia/sequences.txt; and cat ~/.local/state/caelestia/sequences.txt
     '';
     functions.fish_prompt = ''
       set -l last_status $status

@@ -1,6 +1,6 @@
 # Switching Desktop Environments
 
-Both Framework laptops expose four profiles. Replace `HOST` with
+Both Framework laptops expose five profiles. Replace `HOST` with
 `framework-amd-ai-300` or `framework-intel-core-ultra`:
 
 ```text
@@ -8,6 +8,7 @@ HOST             Plasma
 HOST-gnome       GNOME
 HOST-cinnamon    Cinnamon
 HOST-cosmic      COSMIC
+HOST-hyprland    Hyprland with Caelestia
 ```
 
 Both share the same personal files, applications, hardware, backup,
@@ -19,6 +20,7 @@ desktop-sensitive state in separate capsules:
 ~/.local/state/desktop-profiles/gnome
 ~/.local/state/desktop-profiles/cinnamon
 ~/.local/state/desktop-profiles/cosmic
+~/.local/state/desktop-profiles/hyprland
 ```
 
 The capsules are root-owned and are included in the existing encrypted Restic
@@ -57,6 +59,7 @@ Schedule any desktop for the next boot:
 sudo ./scripts/switch-desktop.sh gnome
 sudo ./scripts/switch-desktop.sh cinnamon
 sudo ./scripts/switch-desktop.sh cosmic
+sudo ./scripts/switch-desktop.sh hyprland
 ```
 
 A normal switch follows this sequence:
@@ -101,12 +104,13 @@ These remain shared and are never rolled backward by a desktop switch:
 - Brave, Discord, Telegram, Steam, and PrismLauncher
 - Codex, Claude, SSH, Git, and shell data
 
-These are saved separately for all four desktops:
+These are saved separately for all five desktops:
 
 - Plasma panels, KWin, KDE applications, KDE Connect, and KDE Wallet
 - GNOME dconf, Shell state, Nautilus, GNOME Online Accounts, and GNOME Keyring
 - Cinnamon dconf, panels, applets, Nemo, Online Accounts, and keyring
 - COSMIC panels, tiling, applications, themes, Files, and keyring
+- Caelestia wallpaper palette, shell state, and keyring
 - GTK, Qt, cursor, icon, portal, and desktop theme state
 
 Credential stores are isolated with their desktop. An application may require
@@ -147,6 +151,38 @@ approximated.
 
 The adapted defaults are based on Bluefin's Apache-2.0 licensed
 [GNOME configuration](https://github.com/projectbluefin/common/blob/ed4aa87ad93b1e5ae2501d5b62a8dc5063c45a52/system_files/bluefin/usr/share/glib-2.0/schemas/zz0-bluefin-modifications.gschema.override).
+
+## Hyprland Defaults
+
+The laptop Hyprland profile uses the native NixOS and Home Manager modules with
+UWSM, SDDM, portals, keyring integration, idle locking, and a readable Lua
+configuration. [Caelestia](https://github.com/caelestia-dots/shell) supplies the
+bar, launcher, notifications, lock screen, wallpaper picker, and dynamic color
+scheme through its official flake; no external installer runs.
+
+Start with these keys:
+
+```text
+Super or Super+Space   launcher, settings, wallpapers, and schemes
+Super+/                complete graphical shortcut guide
+Super+Enter            Ghostty
+Super+B                Brave
+Super+E                Files
+Super+Q                close the focused window
+Super+1 through 9      change workspace
+Ctrl+Alt+Delete        session and power menu
+```
+
+The first login selects a bundled NixOS wallpaper and derives matching
+Hyprland, Caelestia, GTK, and live Ghostty terminal colors. Three starter
+wallpapers appear under `~/Pictures/Wallpapers`; adding images there makes them
+available to the picker. Wallpaper and generated palette state return with the
+Hyprland capsule.
+
+The touchpad matches Plasma: tap-to-click and tap-and-drag are off, natural
+scrolling and finger-based physical clicking are on, and the scroll factor is
+`0.3`. A three-finger horizontal swipe changes workspaces. The screen locks
+after 5 minutes idle, powers off after 10, and suspends after 20.
 
 ## Cinnamon and COSMIC Defaults
 
