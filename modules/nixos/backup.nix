@@ -57,6 +57,9 @@ in
         "/home/${cfg.user}/.local/share/Trash"
         "/home/${cfg.user}/.local/state/home-manager"
         "/home/${cfg.user}/.local/state/nix"
+        # ROM masters live on the NAS and are reproducible. Keep the adjacent
+        # RetroDECK BIOS, saves, states, screenshots, and mutable configuration.
+        "/home/${cfg.user}/retrodeck/roms"
         # Re-downloadable Steam content. Keep userdata, config, screenshots,
         # and compatdata because Proton prefixes may contain non-cloud saves.
         "/home/${cfg.user}/.local/share/Steam/steamapps/common"

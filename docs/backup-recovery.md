@@ -31,11 +31,14 @@ It excludes:
 ~/.local/share/Trash
 ~/.local/state/home-manager
 ~/.local/state/nix
+~/retrodeck/roms (canonical ROM library is stored separately on the NAS)
 Steam game downloads, Workshop content, and shader caches
 directories marked with CACHEDIR.TAG
 ```
 
-Steam settings, screenshots, `userdata`, and Proton `compatdata` are kept.
+RetroDECK BIOS files, saves, save states, screenshots, and mutable emulator
+configuration are kept. Steam settings, screenshots, `userdata`, and Proton
+`compatdata` are also kept.
 System libvirt VMs under `/var/lib/libvirt` are not backed up. Applications may
 ask you to sign in again after a restore.
 
