@@ -123,19 +123,37 @@ the Xbox-style labels printed on the Steam Controller: physical `A/B/X/Y`
 correspond to SNES `B/A/Y/X`. This is the standard positional mapping and keeps
 platforming controls in their original locations.
 
-Hold the controller's `Select` button while pressing:
+The live RetroArch, PCSX2, and Dolphin configurations include native controller
+chords in addition to RetroDECK's existing keyboard hotkeys. They therefore work
+when Triton is exposing its virtual Xbox gamepad even without a Triton-specific
+RetroDECK Steam Input template. `Select` below is the Xbox-style View/Back
+button.
 
-| Combination | Action |
-| --- | --- |
-| `Select + Start` | Quit the current emulator |
-| `Select + A` | Pause or resume |
-| `Select + X` | Toggle fullscreen |
-| `Select + Y` | Open the emulator menu |
-| `Select + L1` | Load state |
-| `Select + R1` | Save state |
-| `Select + L2` | Rewind where supported |
-| `Select + R2` | Fast-forward |
-| `Select + D-pad Left/Right` | Previous or next state slot |
+Hold `Select` while pressing:
+
+| Combination | Action | Native support |
+| --- | --- | --- |
+| `Select + A` | Pause or resume | RetroArch, PCSX2, Dolphin |
+| `Select + B` | Take a screenshot | RetroArch, PCSX2, Dolphin |
+| `Select + X` | Toggle fullscreen | RetroArch, PCSX2, Dolphin |
+| `Select + Y` | Open the Quick/Pause Menu | RetroArch, PCSX2 |
+| `Select + L1` | Load the selected state | RetroArch, PCSX2, Dolphin |
+| `Select + R1` | Save to the selected state | RetroArch, PCSX2, Dolphin |
+| `Select + L2` | Rewind while held | RetroArch, when rewind is enabled |
+| `Select + R2` | Fast-forward while held | RetroArch, PCSX2 |
+| `Select + D-pad Left/Right` | Previous or next state slot | RetroArch, PCSX2, Dolphin |
+| `Select + Start` | Quit the current emulator | RetroArch, PCSX2, Dolphin |
+| `L3 + R3` | Open the Quick Menu without `Select` | RetroArch |
+
+Reset is intentionally not bound directly because it is too easy to trigger by
+accident. In RetroArch, use `Select + Y`, then **Quick Menu -> Restart/Reset**.
+PCSX2 exposes reset from its `Select + Y` pause menu. Dolphin has no equivalent
+controller overlay; exit and relaunch the game when a full reset is needed.
+
+Rewind remains disabled globally to avoid its CPU and memory cost on N64 and
+PS1. It can be enabled in a core or game override; `Select + L2` then works.
+Save states are a convenience and may become incompatible after emulator/core
+updates, so ordinary in-game saves remain the durable default.
 
 The older Gordon layout is for a different controller type and should not be
 selected for Triton.
