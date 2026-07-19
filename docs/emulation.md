@@ -179,10 +179,10 @@ Important locations are:
 | Screenshots | `~/retrodeck/screenshots` |
 | Mutable component configuration | `~/.var/app/net.retrodeck.retrodeck` |
 
-On Framework hosts with the Restic job enabled, these locations are included in
-the existing home backup. A large ROM library will therefore consume NAS space;
-add `~/retrodeck/roms` to the Restic exclusion list only if the original dumps
-are safely archived somewhere else.
+On Framework hosts with the Restic job enabled, the home backup keeps BIOS,
+saves, save states, screenshots, and mutable component configuration. It skips
+`~/retrodeck/roms` because the canonical ROM library is already stored on the
+NAS. Restore or remount that library separately after reinstalling.
 
 The configuration installs RetroDECK on both laptops, but it does not
 automatically copy ROMs or saves between them. Do not run the same mutable save
