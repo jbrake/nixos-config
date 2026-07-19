@@ -13,6 +13,11 @@ let
   # matching shortcut and its controller templates during first-run setup.
   retrodeckSteamGameId = "10745277884156346368";
 
+  # Steam derives this ID from shortcut name "Ryubing" and executable
+  # "flatpak". Unlike RetroDECK, Ryubing's one-time shortcut is added manually
+  # because Steam owns a mutable binary shortcuts.vdf in the user's home.
+  ryubingSteamGameId = "13571547157277704192";
+
   # The 2026 Steam Controller's stock Puck relies on Steam Input for ordinary
   # gamepad emulation. Shadow the Flatpak-exported desktop entry so launching
   # RetroDECK from an application menu cannot accidentally use Puck lizard mode
@@ -31,6 +36,22 @@ let
     terminal = false;
   };
 
+  # Shadow the Flatpak export for the same reason as RetroDECK: the standalone
+  # Switch emulator should receive Triton's Steam Input virtual gamepad.
+  ryubingSteamLauncher = pkgs.makeDesktopItem {
+    name = "io.github.ryubing.Ryujinx";
+    desktopName = "Ryubing";
+    genericName = "Nintendo Switch Emulator";
+    comment = "Launch Ryubing through Steam Input";
+    exec = "${pkgs.steam}/bin/steam steam://rungameid/${ryubingSteamGameId}";
+    icon = "io.github.ryubing.Ryujinx";
+    categories = [
+      "Game"
+      "Emulator"
+    ];
+    terminal = false;
+  };
+
 in
 {
   services.flatpak = {
@@ -38,6 +59,13 @@ in
     packages = [
       {
         appId = "net.retrodeck.retrodeck";
+        origin = "flathub";
+      }
+      # RetroDECK permanently removed Switch emulation in 0.10.5b. Keep the
+      # community Ryubing build standalone so RetroDECK updates cannot remove
+      # its emulator, firmware, keys, saves, or configuration.
+      {
+        appId = "io.github.ryubing.Ryujinx";
         origin = "flathub";
       }
     ];
@@ -86,5 +114,8 @@ in
     "uinput"
   ];
 
-  environment.systemPackages = [ retrodeckSteamLauncher ];
+  environment.systemPackages = [
+    retrodeckSteamLauncher
+    ryubingSteamLauncher
+  ];
 }

@@ -37,8 +37,10 @@ directories marked with CACHEDIR.TAG
 ```
 
 RetroDECK BIOS files, saves, save states, screenshots, and mutable emulator
-configuration are kept. Steam settings, screenshots, `userdata`, and Proton
-`compatdata` are also kept.
+configuration are kept. Ryubing's private keys, installed Switch firmware,
+saves, and configuration below `~/.var/app/io.github.ryubing.Ryujinx` are kept
+as well. Steam settings, screenshots, `userdata`, and Proton `compatdata` are
+also kept.
 System libvirt VMs under `/var/lib/libvirt` are not backed up. Applications may
 ask you to sign in again after a restore.
 
