@@ -11,6 +11,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # RetroDECK is intentionally distributed as a Flatpak. This module keeps
+    # that one external application declarative without treating every Flatpak
+    # installed by hand as NixOS-owned state.
+    nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
+
     plasma-manager = {
       url = "github:nix-community/plasma-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -117,6 +122,8 @@
             ./modules/nixos/laptop.nix
             ./modules/nixos/virtualization-host.nix
             ./modules/nixos/workstation-apps.nix
+            inputs.nix-flatpak.nixosModules.nix-flatpak
+            ./modules/nixos/emulation.nix
             ./modules/nixos/desktop-state.nix
             desktopModule
           ]

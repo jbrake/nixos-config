@@ -38,6 +38,8 @@ Disposable VM profiles remain independent:
 - Home Manager owns user tools and selected desktop settings. Machine-specific
   Plasma panel IDs are restricted to the deployed AMD host.
 - Restic backs up unmanaged home data to an encrypted Synology repository.
+- Both Framework laptops include the same controller-first RetroDECK emulation
+  environment; see the emulation guide for installation and first-run choices.
 
 ## Layout
 
@@ -195,6 +197,7 @@ and new system generations.
 - [VM guest setup](docs/vm-guests.md)
 - [Fingerprint behavior](docs/fingerprint.md)
 - [Hardware notes](docs/hardware.md)
+- [RetroDECK emulation and Steam Controller](docs/emulation.md)
 
 ## Public Repository Safety
 
