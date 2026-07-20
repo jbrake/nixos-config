@@ -1,4 +1,4 @@
-# NixOS Configurations
+# Jason's NixOS Configurations
 
 [![CI](https://github.com/jbrake/nixos-config/actions/workflows/ci.yml/badge.svg)](https://github.com/jbrake/nixos-config/actions/workflows/ci.yml)
 
@@ -6,42 +6,68 @@ Personal, multi-host NixOS configurations for Framework laptops and disposable
 desktop-environment VMs. The repository uses flakes, Home Manager, small
 role-based modules, and CI to keep the deployed configuration reproducible.
 
-## Hosts and Profiles
+> [!IMPORTANT]
+> This is a live personal configuration, not a general-purpose NixOS installer.
+> It contains Jason's username, hostnames, hardware assumptions, backup endpoint,
+> application choices, and machine-specific state. Treat it as a reference or
+> fork it and adapt those values before deploying it. Review every command before
+> running it as root.
 
-Each Framework exposes the same five desktop profiles. The unsuffixed output
-is Plasma.
+## Highlights
 
-| Hardware | Plasma | GNOME | Cinnamon | COSMIC | Hyprland | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | `framework-amd-ai-300-gnome` | `framework-amd-ai-300-cinnamon` | `framework-amd-ai-300-cosmic` | `framework-amd-ai-300-hyprland` | Deployed; being replaced |
-| Intel Core Ultra Series 3 | `framework-intel-core-ultra` | `framework-intel-core-ultra-gnome` | `framework-intel-core-ultra-cinnamon` | `framework-intel-core-ultra-cosmic` | `framework-intel-core-ultra-hyprland` | Planned; guarded hardware placeholder |
+- Plasma, GNOME, Cinnamon, COSMIC, and Hyprland profiles share one laptop
+  configuration without sharing desktop-sensitive state.
+- Boot-time state capsules preserve each desktop's settings while personal files
+  and application profiles remain common.
+- Role-based modules separate laptop hardware, virtual-machine guests,
+  applications, containers, backups, emulation, and desktop behavior.
+- Rebuild and update scripts retain the active desktop profile, verify changes,
+  and avoid switching to an unbuildable update.
+- Encrypted Restic backups provide home-directory history and fresh-install
+  recovery independently of the local desktop capsules.
+- CI formats and lints the repository, checks documentation links, scans the full
+  Git history for secrets, evaluates every host, and builds all AMD profiles.
+
+## Supported Profiles
+
+The unsuffixed laptop output uses Plasma. The other desktops append their name
+to the hardware output, such as `framework-amd-ai-300-gnome`.
+
+| Hardware | Base output | Status |
+| --- | --- | --- |
+| Framework 13, AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | Deployed; being replaced |
+| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-core-ultra` | Planned; hardware placeholder only |
+
+| Desktop | Output suffix |
+| --- | --- |
+| Plasma | none |
+| GNOME | `-gnome` |
+| Cinnamon | `-cinnamon` |
+| COSMIC | `-cosmic` |
+| Hyprland with Caelestia | `-hyprland` |
 
 Disposable VM profiles remain independent:
 
-| Host | Role | Status |
+| Output | Role | Status |
 | --- | --- | --- |
 | `qemu-vm` | GNOME guest under virt-manager | Available |
 | `vm-cosmic` | COSMIC guest | Available |
 | `vm-hyprland` | Hyprland guest | Available |
 | `vm-cinnamon` | Cinnamon guest | Available |
 
-## Design
+## Architecture
 
 - `flake.lock` pins Nixpkgs, Home Manager, Plasma Manager, Caelestia, hardware
   profiles, and the two AI CLI package sources.
-- `base.nix` contains settings shared by every host.
-- Physical laptops add laptop and virtualization-host roles; guests do not
-  inherit laptop firmware, Bluetooth, VPN, or nested libvirt services.
-- All five laptop desktops share one workstation application module; their
-  desktop settings are swapped through separate, Restic-backed state capsules.
-- Each VM has one desktop environment to avoid cross-desktop state in `$HOME`.
+- Physical laptops add laptop, virtualization-host, workstation, emulation,
+  backup, fingerprint, and desktop-state roles.
+- Guests omit laptop firmware, Bluetooth, VPN, backups, emulation, and nested
+  libvirt services.
+- Each VM has one desktop environment to prevent one desktop's cursor, font, or
+  settings from contaminating another.
 - Home Manager owns user tools and selected desktop settings. Machine-specific
   Plasma panel IDs are restricted to the deployed AMD host.
-- Restic backs up unmanaged home data to an encrypted Synology repository.
-- Both Framework laptops include the same controller-first RetroDECK emulation
-  environment; see the emulation guide for installation and first-run choices.
-
-## Layout
+- The hardware profiles define encrypted Restic backups to Jason's Synology NAS.
 
 ```text
 flake.nix                              host constructors, outputs, checks
@@ -59,20 +85,65 @@ modules/nixos/backup.nix               encrypted Restic backups
 modules/nixos/fingerprint.nix          Framework fingerprint behavior
 home/jason/home.nix                    Home Manager profile
 scripts/                               install, rebuild, update, and checks
-docs/                                  recovery and hardware-specific notes
+docs/                                  recovery and hardware-specific guides
 ```
 
-## Install a Framework Laptop
+## Adapting This Repository
+
+Fork the repository before making it your system configuration, then clone your
+fork rather than this upstream repository:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/nixos-config.git
+cd nixos-config
+```
+
+At minimum, review and replace the following:
+
+1. Change the default username, Git identity, home module, UID, and hardcoded
+   script paths in `flake.nix`, `modules/nixos/base.nix`, `home/`, and `scripts/`.
+2. Define a host for your exact hardware. Generate your own
+   `hardware-configuration.nix`; never reuse another machine's filesystem UUIDs.
+3. Disable `enableBackup` for your profiles until `modules/nixos/backup.nix`, the
+   NAS host key, repository path, account, and root-only secrets refer to your
+   own backup destination.
+4. Review the desktop, application, Tailscale, fingerprint, virtualization, and
+   emulation modules and remove roles you do not want.
+5. Choose partitioning and encryption for your own threat model. The owner's
+   current disk layout below is descriptive, not a recommendation.
+6. Keep `system.stateVersion` at the original value on an existing installation;
+   choose the appropriate value deliberately for a genuinely new configuration.
+
+This search identifies the main owner-specific values, but it is not a substitute
+for reading the configuration:
+
+```bash
+rg -ni 'jason|jbrake|pnut001|brake-nas|10\.69\.1\.164|restic-jason' .
+```
+
+Before deploying a fork, run the validation commands below and inspect the full
+result of `nix flake show`.
+
+## Owner Installation
+
+The procedures in this section are Jason's reinstall runbook. They intentionally
+assume user `jason`, this repository layout, one of the listed Framework models,
+and the configured Synology backup environment.
 
 ### Graphical installer
 
+> [!CAUTION]
+> Selecting **Erase disk** destroys the existing contents of the selected drive.
+> The no-encryption layout documented here is the owner's current choice, not a
+> requirement of this flake or a recommendation for other systems.
+
 1. Boot the NixOS Plasma ISO and use the graphical installer.
-2. Current partitioning choices are erase disk, no disk encryption, no disk
+2. The current owner procedure selects erase disk, no disk encryption, no disk
    swap, and user `jason`. The configuration enables compressed zram swap.
 3. After the installer reboots, open a terminal and run the following. This
-   example targets the incoming Intel laptop; use `framework-amd-ai-300` for
-   both variables on the AMD laptop. Append `-gnome`, `-cinnamon`, `-cosmic`,
-   or `-hyprland` to `profile` to start with another desktop.
+   example targets the planned Intel laptop; use `framework-amd-ai-300` for both
+   variables on the AMD laptop. Append `-gnome`, `-cinnamon`, `-cosmic`, or
+   `-hyprland` to `profile` to start with another desktop.
 
    ```bash
    mkdir -p ~/Documents/repos
@@ -94,7 +165,8 @@ on a new installation.
 
 ### Direct installer flow
 
-For a manually partitioned system already mounted at `/mnt`:
+For an owner installation that has already been manually partitioned and
+mounted at `/mnt`:
 
 ```bash
 git clone https://github.com/jbrake/nixos-config.git
@@ -104,21 +176,24 @@ sudo ./scripts/install-host.sh framework-intel-core-ultra
 
 The script generates the hardware configuration, installs the flake, prompts
 for the real `jason` password, and clones only Git-managed repository content
-to `/home/jason/Documents/repos/nixos-config` on the target system.
+to `/home/jason/Documents/repos/nixos-config` on the target system. It is not a
+generic installer and refuses to overwrite an existing target checkout.
 
-The Intel configurations stay evaluation-safe for CI, but install, rebuild,
+The Intel configurations remain evaluation-safe for CI, but install, rebuild,
 and update scripts refuse to deploy them while the hardware file contains the
 `INTEL_HARDWARE_PLACEHOLDER` marker. Generating the real hardware configuration
 removes that guard.
 
-## First Boot
+## Owner First Boot
 
-Set the writable Git remote:
+Point the checkout at Jason's writable SSH remote:
 
 ```bash
 cd ~/Documents/repos/nixos-config
 git remote set-url origin git@github.com:jbrake/nixos-config.git
 ```
+
+Anyone using a fork must substitute their own repository URL.
 
 ### GitHub CLI authentication
 
@@ -131,8 +206,8 @@ global Git config instead:
 GIT_CONFIG_GLOBAL="$HOME/.gitconfig" gh auth login -h github.com --web
 ```
 
-Confirm the login with `gh auth status`. This is useful for repository traffic
-queries, pull requests, and other authenticated GitHub operations.
+Confirm the login with `gh auth status`. Repository traffic endpoints require
+administrative access to the repository being queried.
 
 Enroll the fingerprint reader and connect Tailscale:
 
@@ -143,12 +218,11 @@ sudo tailscale up
 
 Application accounts, phone pairing, and display scale remain interactive.
 Home Manager declares shared defaults and desktop-specific file managers. See
-the desktop-switching guide for GNOME defaults, Cinnamon touchpad behavior,
-COSMIC's evolving settings, Hyprland shortcuts and theming, and state isolation.
+the desktop-switching guide for desktop defaults, shortcuts, and state isolation.
 
-## Daily Use
+## Daily Operations
 
-Apply the current host configuration:
+Apply the active host and desktop configuration:
 
 ```bash
 ./scripts/rebuild.sh
@@ -204,7 +278,7 @@ nix flake check --print-build-logs
 `scripts/rebuild.sh` also prints the closure difference between the previous
 and new system generations.
 
-## Additional Documentation
+## Guides
 
 - [Backup and full recovery](docs/backup-recovery.md)
 - [Switching desktop environments](docs/desktop-switching.md)
@@ -216,12 +290,12 @@ and new system generations.
 ## Public Repository Safety
 
 The repository intentionally publishes hostnames, hardware details, filesystem
-UUIDs, package choices, a private-LAN NAS address, and public SSH host keys.
+UUIDs, package choices, a private-LAN NAS address, and a public SSH host key.
 Those values cannot authenticate to the NAS or decrypt the Restic repository.
 
 Never commit private SSH keys, authentication tokens, browser profiles, VPN
-credentials, application state, or files under `/var/lib/secrets`. CI scans the
-full Git history with Gitleaks.
+credentials, application state, or files under `/var/lib/secrets`. CI scans both
+the current tree and full Git history with Gitleaks.
 
 ## License
 
