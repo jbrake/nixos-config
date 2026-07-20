@@ -120,6 +120,20 @@ cd ~/Documents/repos/nixos-config
 git remote set-url origin git@github.com:jbrake/nixos-config.git
 ```
 
+### GitHub CLI authentication
+
+`github-cli` is installed in the shared base profile. Home Manager owns
+`~/.config/git/config`, so GitHub CLI cannot update that read-only generated
+file during its normal login flow. Authenticate with a separate, writable
+global Git config instead:
+
+```bash
+GIT_CONFIG_GLOBAL="$HOME/.gitconfig" gh auth login -h github.com --web
+```
+
+Confirm the login with `gh auth status`. This is useful for repository traffic
+queries, pull requests, and other authenticated GitHub operations.
+
 Enroll the fingerprint reader and connect Tailscale:
 
 ```bash
