@@ -67,6 +67,7 @@
     duf
     fastfetch
     git
+    github-cli
     glances
     gobuster
     jq
