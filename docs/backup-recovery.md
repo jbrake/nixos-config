@@ -4,6 +4,69 @@ Jason's home directory is backed up daily to an encrypted Restic repository on
 the Synology NAS. NixOS configures the job; two root-only secrets provide
 access.
 
+## Quick Reference
+
+These commands assume the configured NixOS system and both
+[required secrets](#required-secrets) are available. Always choose an explicit
+snapshot ID before restoring. This matters during the AMD-to-Intel replacement
+because both laptops use the same repository.
+
+### Make a backup now
+
+```bash
+sudo systemctl start restic-backups-jason-home.service
+sudo restic-jason-home snapshots --host "$(hostname)" --latest 1
+```
+
+The first command waits for the backup, retention pass, and repository check to
+finish. It can take several minutes and normally prints nothing while it runs.
+Follow progress from another terminal if wanted:
+
+```bash
+journalctl -fu restic-backups-jason-home.service
+```
+
+### Choose and inspect a snapshot
+
+```bash
+sudo restic-jason-home snapshots --group-by host,paths
+sudo restic-jason-home ls SNAPSHOT_ID /home/jason/Documents --recursive
+sudo restic-jason-home find --host framework-amd-ai-300 example.txt
+```
+
+The first command shows the snapshot ID, time, source host, and backed-up path.
+`ls` browses one chosen snapshot. `find` searches available versions of a lost
+file; replace the hostname when searching snapshots from a different system.
+
+### Restore one or several paths
+
+Restore into a unique temporary directory, inspect the result, and then copy it
+into place:
+
+```bash
+restore_dir="$(mktemp -d /tmp/restic-restore.XXXXXX)"
+sudo restic-jason-home restore SNAPSHOT_ID \
+  --target "$restore_dir" \
+  --include /home/jason/Documents/example.txt \
+  --include /home/jason/Pictures/example-directory
+sudo ls -l "$restore_dir/home/jason/Documents/example.txt"
+sudo rsync -aHAX --numeric-ids \
+  "$restore_dir/home/jason/Documents/example.txt" \
+  /home/jason/Documents/
+sudo rm -rf -- "$restore_dir"
+```
+
+Repeat `--include` for each wanted file or directory. Omit the second example
+when restoring only one path. Copy only the inspected paths back into the home
+directory; the `rsync` example preserves ownership and metadata.
+
+### Restore all backed-up home files
+
+Use [Restore the Entire Home on the Current Installation](#restore-the-entire-home-on-the-current-installation)
+for a working system, or [Full Recovery on a Fresh Installation](#full-recovery-on-a-fresh-installation)
+after replacing a disk or laptop. Both workflows restore into a staging
+directory first. Do not point Restic directly at `/home/jason`.
+
 ## Configuration
 
 ```text
@@ -57,13 +120,7 @@ The SSH key is replaceable through a Synology administrator account.
 Neither secret belongs in Git. The NixOS config, NAS address, account name, and
 public SSH keys are safe in a public repository.
 
-## Routine Commands
-
-Run a backup now and wait for it to finish:
-
-```bash
-sudo systemctl start restic-backups-jason-home.service
-```
+## Maintenance Commands
 
 Check snapshots, the timer, or recent output:
 
@@ -87,11 +144,11 @@ sudo restic-jason-home tag --add archive SNAPSHOT_ID
 
 Use this for deliberate transition points, not routine daily snapshots.
 
-Every scheduled backup also applies the retention policy and runs
-`restic check`. It reads a random 5% of stored pack data on each run so payload
-damage is detected over time. A failed scheduled backup also sends a critical
-desktop notification when Jason is logged in and writes to logged-in terminals
-and the system journal.
+Every scheduled or manually started service backup also applies the retention
+policy and runs `restic check`. It reads a random 5% of stored pack data on each
+run so payload damage is detected over time. A failed scheduled backup also
+sends a critical desktop notification when Jason is logged in and writes to
+logged-in terminals and the system journal.
 
 ## Final Backup Before Reinstalling
 
@@ -106,11 +163,19 @@ applications so their latest state is written to disk.
 
    ```bash
    sudo systemctl start restic-backups-jason-home.service
-   sudo restic-jason-home snapshots --latest 1
+   sudo restic-jason-home snapshots --host "$(hostname)" --latest 1
    ```
 
 The first command waits for the backup and repository check to finish. Confirm
-that the newest snapshot has the current date and time before erasing the disk.
+that the displayed snapshot has the current date and time. Record its snapshot
+ID somewhere available during the replacement, then protect it from retention:
+
+```bash
+sudo restic-jason-home tag --add archive SNAPSHOT_ID
+```
+
+Do not erase the old disk yet. Keep it intact until the replacement laptop has
+restored this exact snapshot and completed its first verified backup.
 
 This TTY step improves consistency for open application databases. Normal daily
 backups remain useful without it.
@@ -179,9 +244,52 @@ laptop before it is sold.
    the `-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` suffix.
 3. Follow the full recovery below. Generate a new Intel SSH key and use the DSM
    task to replace the old AMD key.
-4. Restore the latest AMD snapshot and verify important data.
+4. Restore the recorded AMD snapshot ID and verify important data. Do not use
+   `latest` during the replacement.
 5. Run a new backup from Intel and confirm its snapshot appears.
 6. Only then erase the AMD laptop for sale.
+
+## Restore the Entire Home on the Current Installation
+
+This restores every file present in the chosen backup into the current home. It
+is a merge: backed-up files overwrite matching files, but current files that are
+absent from the snapshot are not deleted. Files excluded from backups are not
+recreated. Commit or copy aside anything current that must not be overwritten.
+
+1. Choose a snapshot ID with the [quick-reference commands](#choose-and-inspect-a-snapshot).
+2. Close applications, log out, switch to a TTY with `Ctrl-Alt-F3` or
+   `Ctrl-Alt-Fn-F3`, and log in as `jason`.
+3. Stop new backup runs and the graphical login manager. If the backup service
+   is already active, let it finish before continuing.
+
+   ```bash
+   sudo systemctl stop restic-backups-jason-home.timer
+   systemctl status restic-backups-jason-home.service
+   sudo systemctl stop display-manager.service
+   ```
+
+4. Restore the selected snapshot into the dedicated staging directory. Here,
+   `--delete` cleans only that staging directory if it contains an older restore;
+   it does not delete anything from the live home.
+
+   ```bash
+   sudo restic-jason-home restore SNAPSHOT_ID \
+     --target /mnt/restic-restore \
+     --delete --verify
+   ```
+
+5. Preview the merge, then apply it:
+
+   ```bash
+   sudo rsync -aHAXn --numeric-ids --itemize-changes \
+     /mnt/restic-restore/home/jason/ /home/jason/
+   sudo rsync -aHAX --numeric-ids \
+     /mnt/restic-restore/home/jason/ /home/jason/
+   sudo reboot
+   ```
+
+The configured timer starts again after the reboot. Verify important files
+before removing `/mnt/restic-restore`.
 
 ## Full Recovery on a Fresh Installation
 
@@ -225,9 +333,12 @@ filesystem has new identifiers.
 
 ### 2. Recreate the Restic password file
 
-After rebooting into the rebuilt system:
+After rebooting into the rebuilt system, stop the timer before giving the new
+laptop repository access. This prevents a fresh Intel-home snapshot from being
+created before the AMD data is restored:
 
 ```bash
+sudo systemctl stop restic-backups-jason-home.timer
 sudo install -d -m 700 -o root -g root /var/lib/secrets
 sudoedit /var/lib/secrets/restic-password
 sudo chown root:root /var/lib/secrets/restic-password
@@ -245,10 +356,13 @@ restored to `/var/lib/secrets/restic-ssh-key` as `root:root` mode `0600`.
 Confirm that both secrets work:
 
 ```bash
-sudo restic-jason-home snapshots
+sudo restic-jason-home snapshots --host framework-amd-ai-300
 ```
 
-Do not continue until the snapshots are listed.
+Do not continue until the snapshots are listed. Identify the archived final AMD
+snapshot recorded before the replacement and use that explicit ID below. Do not
+use `latest`: after both laptops have written to this repository, it means the
+newest matching snapshot regardless of which laptop contains the wanted data.
 
 ### 4. Restore the home directory from a TTY
 
@@ -261,10 +375,14 @@ Do not continue until the snapshots are listed.
    sudo systemctl stop display-manager.service
    ```
 
-4. Restore the latest snapshot into a temporary staging directory:
+4. Restore the recorded AMD snapshot into the staging directory. `--delete`
+   removes stale files only from a previous staged restore, and `--verify`
+   rereads the restored data before the live home is changed:
 
    ```bash
-   sudo restic-jason-home restore latest --target /mnt/restic-restore
+   sudo restic-jason-home restore AMD_SNAPSHOT_ID \
+     --target /mnt/restic-restore \
+     --delete --verify
    ```
 
 5. Copy the restored home into place:
@@ -275,8 +393,10 @@ Do not continue until the snapshots are listed.
      /mnt/restic-restore/home/jason/ /home/jason/
    ```
 
-The exclusion keeps the fresh Git clone used for rebuilding. The backed-up copy
-remains in `/mnt/restic-restore` if uncommitted work must be recovered manually.
+The copy is a merge, not an exact mirror: it does not delete fresh files that
+are absent from the backup. The exclusion keeps the fresh Git clone used for
+rebuilding. The backed-up repository remains in `/mnt/restic-restore` if
+uncommitted work must be recovered manually.
 
 ### 5. Rebuild and verify
 
@@ -295,32 +415,38 @@ again. See [Switching Desktop Environments](desktop-switching.md) to change
 desktops or perform a clean GNOME migration without restoring other desktop
 settings.
 
+After the restored data looks correct, make the first Intel backup, confirm its
+host and current timestamp, and ensure the timer is running:
+
+```bash
+sudo systemctl start restic-backups-jason-home.service
+sudo restic-jason-home snapshots --host "$(hostname)" --latest 1
+sudo systemctl start restic-backups-jason-home.timer
+```
+
+Keep the old AMD laptop intact until these commands succeed.
+
 Only after confirming the restore, remove the temporary copy:
 
 ```bash
 sudo rm -rf /mnt/restic-restore
 ```
 
-## Restore One File or Directory
+## Restore an Older Version of a File or Directory
 
-Restore into a temporary directory first:
+Search for the file if its snapshot ID is not already known, then inspect the
+chosen snapshot:
 
 ```bash
-sudo restic-jason-home restore latest \
-  --target /tmp/restic-restore \
-  --include /home/jason/Documents/example.txt
+sudo restic-jason-home find --host framework-amd-ai-300 example.txt
+sudo restic-jason-home ls SNAPSHOT_ID /home/jason/Documents --recursive
 ```
 
-The restored file is under:
+Follow [Restore one or several paths](#restore-one-or-several-paths) using that
+explicit snapshot ID. The staged example file will be under:
 
 ```text
-/tmp/restic-restore/home/jason/Documents/example.txt
-```
-
-Inspect or copy it, then remove the temporary directory:
-
-```bash
-sudo rm -rf /tmp/restic-restore
+/tmp/restic-restore.RANDOM/home/jason/Documents/example.txt
 ```
 
 ## Important Behavior and Limits

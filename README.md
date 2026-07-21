@@ -259,7 +259,8 @@ sudo restic-jason-home snapshots
 ```
 
 See [Restic Backup and Recovery](docs/backup-recovery.md) for coverage, NAS key
-bootstrap, manual backups, and complete fresh-system recovery.
+bootstrap, one-off backups, selected-file restores, whole-home recovery, and the
+AMD-to-Intel replacement workflow.
 
 ## Validation
 
