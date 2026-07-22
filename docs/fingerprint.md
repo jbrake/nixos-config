@@ -11,7 +11,18 @@ configuration.
 
 The Framework Goodix reader can also become unreliable after suspend. The
 module keeps that specific USB device out of runtime autosuspend and stops
-fprintd before sleep so D-Bus can start it cleanly on the next request.
+fprintd before sleep so D-Bus can start it cleanly on the next request. After
+resume, a NixOS service waits two seconds and checks whether the reader
+returned. It normally does nothing; if the reader is missing, it resets the
+saved xHCI controller and refreshes fprintd. The controller is discovered at
+boot instead of being hard-coded, so the same module works across Framework
+profiles.
+
+Inspect recovery decisions with:
+
+```bash
+journalctl -u framework-fingerprint-wake.service
+```
 
 Useful commands:
 
