@@ -161,6 +161,7 @@
           hostname,
           hardwareModule,
           enableBackup ? false,
+          fingerprintResetMode ? "when-missing",
         }:
         lib.mapAttrs' (
           desktop: desktopModule:
@@ -177,6 +178,9 @@
             extraModules = [
               hardwareModule
               ./modules/nixos/fingerprint.nix
+              {
+                jbrake.frameworkFingerprint.resetMode = fingerprintResetMode;
+              }
             ]
             ++ lib.optional enableBackup {
               jbrake.resticBackup = {
@@ -194,6 +198,9 @@
           hostname = "framework-amd-ai-300";
           hardwareModule = "${nixos-hardware}/framework/13-inch/amd-ai-300-series";
           enableBackup = true;
+          # This controller is dedicated to the Goodix reader on the AMD
+          # laptop, so resetting it after every wake is safe.
+          fingerprintResetMode = "always";
         })
         // (mkFrameworkLaptopProfiles {
           hostname = "framework-intel-core-ultra";
