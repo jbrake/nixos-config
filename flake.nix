@@ -199,8 +199,8 @@
           hardwareModule = "${nixos-hardware}/framework/13-inch/amd-ai-300-series";
           enableBackup = true;
           # This controller is dedicated to the Goodix reader on the AMD
-          # laptop, so resetting it after every wake is safe.
-          fingerprintResetMode = "always";
+          # laptop, so resetting it immediately before use is safe.
+          fingerprintResetMode = "before-use";
         })
         // (mkFrameworkLaptopProfiles {
           hostname = "framework-intel-core-ultra";

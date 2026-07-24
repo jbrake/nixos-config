@@ -11,21 +11,24 @@ configuration.
 
 The Framework Goodix reader can also become unreliable after suspend. The
 module keeps that specific USB device out of runtime autosuspend and stops
-fprintd before sleep so D-Bus can start it cleanly on the next request. After
-resume, a NixOS service waits two seconds before recovery. The AMD AI 300
-profile resets the reader's dedicated xHCI controller after every wake because
-the reader can remain visible to USB while internally unresponsive. Other
-Framework profiles reset only when the reader is missing until their USB
-topology has been verified. The controller is discovered at boot instead of
-being hard-coded.
+fprintd before sleep so D-Bus can start it cleanly on the next request.
 
-Recovery is ordered before fprintd, preventing Plasma's immediate D-Bus request
-from opening the reader while recovery is still in progress.
+The AMD AI 300 profile resets the reader's dedicated xHCI controller
+immediately before each fprintd activation. This improves reliability after
+both suspend and ordinary Plasma locks, including cases where the reader
+remains visible to USB but becomes unresponsive. It is a workaround rather
+than a complete fix for the underlying hardware or firmware behavior. The
+reset runs only when fingerprint authentication is requested.
+
+Other Framework profiles check the reader after resume and reset only when it
+is missing until their USB topology has been verified. The controller is
+discovered at boot instead of being hard-coded.
 
 Inspect recovery decisions with:
 
 ```bash
 journalctl -u framework-fingerprint-wake.service
+journalctl -u fprintd.service
 ```
 
 Useful commands:

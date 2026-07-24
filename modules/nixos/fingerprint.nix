@@ -77,20 +77,12 @@ let
         echo "Recorded fingerprint controller $(<"$controller_file")"
       }
 
-      recover_reader() {
+      reset_controller() {
+        local reason="$1"
         local device controller pci_device driver driver_dir
 
-        echo "Checking fingerprint reader after wake"
-        sleep 2
-
-        if [[ "$reset_mode" == "when-missing" ]] && device="$(find_reader)"; then
-          remember_controller "$device"
-          echo "Fingerprint reader is present; no recovery needed"
-          return 0
-        fi
-
         if [[ ! -r "$controller_file" ]]; then
-          echo "Fingerprint reader is missing and no saved controller is available" >&2
+          echo "No saved fingerprint controller is available" >&2
           return 1
         fi
         read -r controller < "$controller_file"
@@ -111,11 +103,7 @@ let
         fi
         driver_dir="/sys/bus/pci/drivers/$driver"
 
-        if [[ "$reset_mode" == "always" ]]; then
-          echo "Resetting dedicated fingerprint controller $controller after wake"
-        else
-          echo "Fingerprint reader is missing; resetting controller $controller"
-        fi
+        echo "Resetting fingerprint controller $controller $reason"
         printf '%s\n' "$controller" > "$driver_dir/unbind"
         sleep 1
         printf '%s\n' "$controller" > "$driver_dir/bind"
@@ -129,11 +117,31 @@ let
         fi
       }
 
+      recover_reader() {
+        local device
+
+        echo "Checking fingerprint reader after wake"
+        sleep 2
+
+        if [[ "$reset_mode" == "when-missing" ]] && device="$(find_reader)"; then
+          remember_controller "$device"
+          echo "Fingerprint reader is present; no recovery needed"
+          return 0
+        fi
+
+        reset_controller "after wake"
+      }
+
+      prepare_reader() {
+        reset_controller "before fprintd starts"
+      }
+
       mkdir -p "$state_dir"
       case "''${1:-}" in
         record) record_reader ;;
         recover) recover_reader ;;
-        *) echo "usage: framework-fingerprint-wake {record|recover}" >&2; exit 2 ;;
+        prepare) prepare_reader ;;
+        *) echo "usage: framework-fingerprint-wake {record|recover|prepare}" >&2; exit 2 ;;
       esac
     '';
   };
@@ -150,11 +158,13 @@ in
     type = lib.types.enum [
       "when-missing"
       "always"
+      "before-use"
     ];
     default = "when-missing";
     description = ''
       Whether to reset the fingerprint reader's validated xHCI controller
-      after every resume or only when the reader is missing.
+      only when missing after resume, after every resume, or before each
+      fprintd activation.
     '';
   };
 
@@ -189,9 +199,9 @@ in
       };
     };
 
-    # Plasma asks D-Bus to start fprintd as soon as the user session thaws.
-    # Complete recovery first so fprintd cannot open a half-resumed reader.
-    systemd.services.framework-fingerprint-wake = {
+    # Conservative profiles recover after resume. Plasma asks D-Bus to start
+    # fprintd as soon as the user session thaws, so order recovery first.
+    systemd.services.framework-fingerprint-wake = lib.mkIf (cfg.resetMode != "before-use") {
       description = "Restore the Framework fingerprint reader after resume";
       wantedBy = sleepTargets;
       wants = [ "framework-fingerprint-controller.service" ];
@@ -203,6 +213,18 @@ in
         RuntimeDirectoryPreserve = true;
         ExecStart = "${fingerprintWake}/bin/framework-fingerprint-wake recover";
       };
+    };
+
+    # On the verified AMD topology the xHCI controller is dedicated to the
+    # reader. Reset it immediately before fprintd opens the device, mitigating
+    # both real suspend and the observed lock/idle failure without resetting
+    # the controller when fingerprint authentication is not requested.
+    systemd.services.fprintd = lib.mkIf (cfg.resetMode == "before-use") {
+      wants = [ "framework-fingerprint-controller.service" ];
+      after = [ "framework-fingerprint-controller.service" ];
+      serviceConfig.ExecStartPre = [
+        "${fingerprintWake}/bin/framework-fingerprint-wake prepare"
+      ];
     };
 
     # Fingerprint auth is deliberately SUDO-ONLY. This mirrors the setup that
