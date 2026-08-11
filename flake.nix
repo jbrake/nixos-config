@@ -2,9 +2,13 @@
   description = "Jason's NixOS laptop configurations";
 
   inputs = {
-    # Unstable carries current Plasma, kernels, and firmware for both Framework
-    # generations. flake.lock pins every input for reproducible builds.
+    # Unstable remains the default package set and supplies the newest kernel
+    # and firmware to the Intel compatibility profile below.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    # The Intel Framework is smooth on this complete userspace snapshot
+    # (Plasma 6.6.5). Keeping the package set whole avoids mixed Qt/KDE ABIs.
+    nixpkgs-intel-known-good.url = "github:NixOS/nixpkgs/a0374025a863d007d98e3297f6aa46cc3141c2f0";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -58,6 +62,7 @@
         {
           hostname,
           desktop,
+          nixpkgsInput ? nixpkgs,
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
@@ -66,7 +71,7 @@
           # one desktop per VM guest).
           extraModules ? [ ],
         }:
-        nixpkgs.lib.nixosSystem {
+        nixpkgsInput.lib.nixosSystem {
           inherit system;
           specialArgs = {
             inherit
@@ -105,6 +110,7 @@
           hostname,
           desktop,
           desktopModule,
+          nixpkgsInput ? nixpkgs,
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
@@ -114,6 +120,7 @@
           inherit
             hostname
             desktop
+            nixpkgsInput
             profile
             username
             homeModule
@@ -160,6 +167,7 @@
         {
           hostname,
           hardwareModule,
+          nixpkgsInput ? nixpkgs,
           enableBackup ? false,
           fingerprintResetMode ? "when-missing",
         }:
@@ -172,6 +180,7 @@
             inherit
               hostname
               desktop
+              nixpkgsInput
               profile
               desktopModule
               ;
@@ -205,6 +214,7 @@
         // (mkFrameworkLaptopProfiles {
           hostname = "framework-intel-core-ultra";
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
+          nixpkgsInput = inputs.nixpkgs-intel-known-good;
           enableBackup = true;
         })
         // {

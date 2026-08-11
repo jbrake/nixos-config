@@ -15,6 +15,33 @@ let
       "framework-amd-ai-300"
       "framework-intel-core-ultra"
     ];
+
+  # KWin stores touchpad settings per physical device. Keep the preferences
+  # portable and isolate the hardware identity here, so a future laptop only
+  # needs one additional device entry.
+  touchpadPreferences = {
+    enable = true;
+    disableWhileTyping = false;
+    leftHanded = false;
+    middleButtonEmulation = false;
+    pointerSpeed = 0;
+    accelerationProfile = "default";
+    naturalScroll = true;
+    tapToClick = false;
+    tapAndDrag = false;
+    tapDragLock = false;
+    scrollMethod = "twoFingers";
+    scrollSpeed = 0.3;
+    rightClickMethod = "twoFingers";
+  };
+
+  touchpadDevices = {
+    "framework-intel-core-ultra" = {
+      name = "PIXA3854:00 093A:1343 Touchpad";
+      vendorId = "093a";
+      productId = "1343";
+    };
+  };
 in
 {
   imports = [
@@ -36,6 +63,11 @@ in
     # profiles. A stray KDE cursor-theme setting once broke the GNOME VM.
     enable = desktop == "plasma";
     workspace.lookAndFeel = "org.kde.breezedark.desktop";
+    input.touchpads =
+      if desktop == "plasma" && builtins.hasAttr hostname touchpadDevices then
+        [ (touchpadDevices.${hostname} // touchpadPreferences) ]
+      else
+        [ ];
     configFile = {
       "powerdevil.notifyrc" = {
         "Event\\/pluggedin".Action = "";
