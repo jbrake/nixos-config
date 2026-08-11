@@ -31,12 +31,13 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 ## Supported Profiles
 
 The unsuffixed laptop output uses Plasma. The other desktops append their name
-to the hardware output, such as `framework-amd-ai-300-gnome`.
+to the hardware output, such as `framework-intel-core-ultra-gnome`.
 
 | Hardware | Base output | Status |
 | --- | --- | --- |
-| Framework 13, AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | Deployed; being replaced |
-| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-core-ultra` | Planned; hardware placeholder only |
+| Framework 13, AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | Retained configuration; no longer deployed |
+| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-core-ultra` | Deployed; known-good Plasma userspace |
+| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-current` | Temporary current-Plasma test target |
 
 | Desktop | Output suffix |
 | --- | --- |

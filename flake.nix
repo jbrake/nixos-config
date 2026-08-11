@@ -168,13 +168,15 @@
           hostname,
           hardwareModule,
           nixpkgsInput ? nixpkgs,
+          desktopModules ? laptopDesktopModules,
+          plasmaProfile ? hostname,
           enableBackup ? false,
           fingerprintResetMode ? "when-missing",
         }:
         lib.mapAttrs' (
           desktop: desktopModule:
           let
-            profile = if desktop == "plasma" then hostname else "${hostname}-${desktop}";
+            profile = if desktop == "plasma" then plasmaProfile else "${hostname}-${desktop}";
           in
           lib.nameValuePair profile (mkLaptopHost {
             inherit
@@ -199,7 +201,7 @@
               };
             };
           })
-        ) laptopDesktopModules;
+        ) desktopModules;
     in
     {
       nixosConfigurations =
@@ -215,6 +217,18 @@
           hostname = "framework-intel-core-ultra";
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
           nixpkgsInput = inputs.nixpkgs-intel-known-good;
+          enableBackup = true;
+        })
+        # Use this target only to test whether current Plasma has fixed the
+        # Intel UI regression. It shares the real host configuration and UUIDs
+        # but uses the complete current nixpkgs package set.
+        // (mkFrameworkLaptopProfiles {
+          hostname = "framework-intel-core-ultra";
+          hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
+          desktopModules = {
+            plasma = laptopDesktopModules.plasma;
+          };
+          plasmaProfile = "framework-intel-current";
           enableBackup = true;
         })
         // {
