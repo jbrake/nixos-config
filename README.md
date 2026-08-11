@@ -66,8 +66,8 @@ Disposable VM profiles remain independent:
   libvirt services.
 - Each VM has one desktop environment to prevent one desktop's cursor, font, or
   settings from contaminating another.
-- Home Manager owns user tools and selected desktop settings. Machine-specific
-  Plasma panel IDs are restricted to the deployed AMD host.
+- Home Manager owns user tools and selected desktop settings. The retained AMD
+  profile keeps its historical machine-specific Plasma panel IDs.
 - The hardware profiles define encrypted Restic backups to Jason's Synology NAS.
 
 ```text
@@ -128,8 +128,8 @@ result of `nix flake show`.
 ## Owner Installation
 
 The procedures in this section are Jason's reinstall runbook. They intentionally
-assume user `jason`, this repository layout, one of the listed Framework models,
-and the configured Synology backup environment.
+assume user `jason`, this repository layout, the deployed Intel Framework, and
+the configured Synology backup environment.
 
 ### Graphical installer
 
@@ -141,10 +141,9 @@ and the configured Synology backup environment.
 1. Boot the NixOS Plasma ISO and use the graphical installer.
 2. The current owner procedure selects erase disk, no disk encryption, no disk
    swap, and user `jason`. The configuration enables compressed zram swap.
-3. After the installer reboots, open a terminal and run the following. This
-   example targets the planned Intel laptop; use `framework-amd-ai-300` for both
-   variables on the AMD laptop. Append `-gnome`, `-cinnamon`, `-cosmic`, or
-   `-hyprland` to `profile` to start with another desktop.
+3. After the installer reboots, open a terminal and run the following. Append
+   `-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` to `profile` to start with
+   another desktop.
 
    ```bash
    mkdir -p ~/Documents/repos
@@ -261,7 +260,7 @@ sudo restic-jason-home snapshots
 
 See [Restic Backup and Recovery](docs/backup-recovery.md) for coverage, NAS key
 bootstrap, one-off backups, selected-file restores, whole-home recovery, and the
-AMD-to-Intel replacement workflow.
+fresh-install recovery workflow.
 
 ## Validation
 

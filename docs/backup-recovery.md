@@ -8,8 +8,8 @@ access.
 
 These commands assume the configured NixOS system and both
 [required secrets](#required-secrets) are available. Always choose an explicit
-snapshot ID before restoring. This matters during the AMD-to-Intel replacement
-because both laptops use the same repository.
+snapshot ID before restoring. This prevents a fresh installation's empty home
+snapshot or another historical snapshot from being selected accidentally.
 
 ### Make a backup now
 
@@ -31,7 +31,7 @@ journalctl -fu restic-backups-jason-home.service
 ```bash
 sudo restic-jason-home snapshots --group-by host,paths
 sudo restic-jason-home ls SNAPSHOT_ID /home/jason/Documents --recursive
-sudo restic-jason-home find --host framework-amd-ai-300 example.txt
+sudo restic-jason-home find --host framework-intel-core-ultra example.txt
 ```
 
 The first command shows the snapshot ID, time, source host, and backed-up path.
@@ -64,8 +64,9 @@ directory; the `rsync` example preserves ownership and metadata.
 
 Use [Restore the Entire Home on the Current Installation](#restore-the-entire-home-on-the-current-installation)
 for a working system, or [Full Recovery on a Fresh Installation](#full-recovery-on-a-fresh-installation)
-after replacing a disk or laptop. Both workflows restore into a staging
-directory first. Do not point Restic directly at `/home/jason`.
+after reinstalling or replacing a disk. Both workflows restore into a staging
+directory first and preserve the active Git checkout. Do not point Restic
+directly at `/home/jason`.
 
 ## Configuration
 
@@ -168,14 +169,16 @@ applications so their latest state is written to disk.
 
 The first command waits for the backup and repository check to finish. Confirm
 that the displayed snapshot has the current date and time. Record its snapshot
-ID somewhere available during the replacement, then protect it from retention:
+ID somewhere available during recovery, then protect it from retention:
 
 ```bash
 sudo restic-jason-home tag --add archive SNAPSHOT_ID
 ```
 
-Do not erase the old disk yet. Keep it intact until the replacement laptop has
-restored this exact snapshot and completed its first verified backup.
+Before reformatting, do not erase the disk until this exact snapshot is visible
+and protected in the Restic repository. When replacing a disk, keep the old disk
+intact until the new installation has restored the snapshot and completed its
+first verified backup.
 
 This TTY step improves consistency for open application databases. Normal daily
 backups remain useful without it.
@@ -231,24 +234,6 @@ the laptop; only the public `.pub` line goes to the NAS.
 The SSH key only opens the SFTP connection. The Restic password is still needed
 to decrypt the repository.
 
-## Replace the AMD Laptop with the Intel Laptop
-
-The Intel profiles use the same encrypted repository and backup password. The
-replacement workflow deliberately replaces the NAS SSH key, revoking the AMD
-laptop before it is sold.
-
-1. Commit and push this repository, then complete the
-   [final logged-out backup](#final-backup-before-reinstalling) on the AMD
-   laptop.
-2. Install the Intel laptop using `framework-intel-core-ultra`, optionally with
-   the `-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` suffix.
-3. Follow the full recovery below. Generate a new Intel SSH key and use the DSM
-   task to replace the old AMD key.
-4. Restore the recorded AMD snapshot ID and verify important data. Do not use
-   `latest` during the replacement.
-5. Run a new backup from Intel and confirm its snapshot appears.
-6. Only then erase the AMD laptop for sale.
-
 ## Restore the Entire Home on the Current Installation
 
 This restores every file present in the chosen backup into the current home. It
@@ -282,24 +267,28 @@ recreated. Commit or copy aside anything current that must not be overwritten.
 
    ```bash
    sudo rsync -aHAXn --numeric-ids --itemize-changes \
+     --exclude='/Documents/repos/nixos-config/' \
      /mnt/restic-restore/home/jason/ /home/jason/
    sudo rsync -aHAX --numeric-ids \
+     --exclude='/Documents/repos/nixos-config/' \
      /mnt/restic-restore/home/jason/ /home/jason/
    sudo reboot
    ```
 
-The configured timer starts again after the reboot. Verify important files
-before removing `/mnt/restic-restore`.
+The repository exclusion prevents an older backed-up checkout from replacing
+the current Git-managed configuration. Its staged copy remains available under
+`/mnt/restic-restore` if uncommitted files need to be recovered manually. The
+configured timer starts again after the reboot. Verify important files before
+removing `/mnt/restic-restore`.
 
 ## Full Recovery on a Fresh Installation
 
 ### 1. Install and rebuild NixOS
 
-The example commands target the replacement Intel laptop with Plasma. Append
-`-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` to `profile` to start
-elsewhere. For the AMD laptop, set both variables to `framework-amd-ai-300`.
-Desktop state from the backup remains available regardless of the starting
-profile.
+The example commands reinstall the deployed Intel laptop with Plasma. Append
+`-gnome`, `-cinnamon`, `-cosmic`, or `-hyprland` to `profile` to start with
+another desktop. Desktop state from the backup remains available regardless of
+the starting profile.
 
 Install NixOS with the graphical installer:
 
@@ -328,14 +317,16 @@ sudo NIX_CONFIG="experimental-features = nix-command flakes" \
 sudo reboot
 ```
 
-The generated hardware file must replace the repository copy because the new
-filesystem has new identifiers.
+The generated hardware file must replace the repository copy before rebuilding
+because newly formatted filesystems have new identifiers. Keep this fresh Git
+checkout during the later Restic merge; do not restore the backed-up checkout
+over it.
 
 ### 2. Recreate the Restic password file
 
 After rebooting into the rebuilt system, stop the timer before giving the new
-laptop repository access. This prevents a fresh Intel-home snapshot from being
-created before the AMD data is restored:
+installation repository access. This prevents a snapshot of the fresh home from
+being created before the pre-reinstall data is restored:
 
 ```bash
 sudo systemctl stop restic-backups-jason-home.timer
@@ -356,13 +347,13 @@ restored to `/var/lib/secrets/restic-ssh-key` as `root:root` mode `0600`.
 Confirm that both secrets work:
 
 ```bash
-sudo restic-jason-home snapshots --host framework-amd-ai-300
+sudo restic-jason-home snapshots --host framework-intel-core-ultra
 ```
 
-Do not continue until the snapshots are listed. Identify the archived final AMD
-snapshot recorded before the replacement and use that explicit ID below. Do not
-use `latest`: after both laptops have written to this repository, it means the
-newest matching snapshot regardless of which laptop contains the wanted data.
+Do not continue until the snapshots are listed. Identify the protected snapshot
+ID recorded immediately before reinstalling and use that explicit ID below. Do
+not use `latest`: an automatic backup from the fresh installation could otherwise
+select its mostly empty home instead of the intended pre-reinstall snapshot.
 
 ### 4. Restore the home directory from a TTY
 
@@ -375,12 +366,12 @@ newest matching snapshot regardless of which laptop contains the wanted data.
    sudo systemctl stop display-manager.service
    ```
 
-4. Restore the recorded AMD snapshot into the staging directory. `--delete`
-   removes stale files only from a previous staged restore, and `--verify`
-   rereads the restored data before the live home is changed:
+4. Restore the recorded pre-reinstall snapshot into the staging directory.
+   `--delete` removes stale files only from a previous staged restore, and
+   `--verify` rereads the restored data before the live home is changed:
 
    ```bash
-   sudo restic-jason-home restore AMD_SNAPSHOT_ID \
+   sudo restic-jason-home restore SNAPSHOT_ID \
      --target /mnt/restic-restore \
      --delete --verify
    ```
@@ -415,16 +406,27 @@ again. See [Switching Desktop Environments](desktop-switching.md) to change
 desktops or perform a clean GNOME migration without restoring other desktop
 settings.
 
-After the restored data looks correct, make the first Intel backup, confirm its
-host and current timestamp, and ensure the timer is running:
+The fresh hardware configuration is now the authoritative copy for this
+installation. Review, commit, and push it so a later clone contains the current
+filesystem identifiers:
+
+```bash
+cd /home/jason/Documents/repos/nixos-config
+git remote set-url origin git@github.com:jbrake/nixos-config.git
+git diff -- hosts/framework-intel-core-ultra/hardware-configuration.nix
+git add hosts/framework-intel-core-ultra/hardware-configuration.nix
+git commit -m "update hardware configuration after reinstall"
+git push
+```
+
+After the restored data looks correct, make the first post-recovery backup,
+confirm its host and current timestamp, and ensure the timer is running:
 
 ```bash
 sudo systemctl start restic-backups-jason-home.service
 sudo restic-jason-home snapshots --host "$(hostname)" --latest 1
 sudo systemctl start restic-backups-jason-home.timer
 ```
-
-Keep the old AMD laptop intact until these commands succeed.
 
 Only after confirming the restore, remove the temporary copy:
 
@@ -438,7 +440,7 @@ Search for the file if its snapshot ID is not already known, then inspect the
 chosen snapshot:
 
 ```bash
-sudo restic-jason-home find --host framework-amd-ai-300 example.txt
+sudo restic-jason-home find --host framework-intel-core-ultra example.txt
 sudo restic-jason-home ls SNAPSHOT_ID /home/jason/Documents --recursive
 ```
 
