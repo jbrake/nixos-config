@@ -271,7 +271,7 @@ Run the same lint, formatting, link, and secret checks used by CI:
 nix develop --command ./scripts/check.sh
 ```
 
-Evaluate every host and build all five AMD desktop configurations:
+Evaluate every host and build all five Intel desktop configurations:
 
 ```bash
 nix flake check --print-build-logs

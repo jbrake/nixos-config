@@ -122,6 +122,7 @@
             ./modules/nixos/laptop.nix
             ./modules/nixos/virtualization-host.nix
             ./modules/nixos/workstation-apps.nix
+            ./modules/nixos/k8s.nix
             inputs.nix-flatpak.nixosModules.nix-flatpak
             ./modules/nixos/emulation.nix
             ./modules/nixos/desktop-state.nix
@@ -247,12 +248,16 @@
         ];
       };
 
-      # Build every laptop desktop role on deployed AMD hardware in CI. Nix
-      # also evaluates all Intel and VM configurations during flake checks.
+      # Build every laptop desktop role on deployed Intel hardware in CI. Nix
+      # also evaluates all retained AMD and VM configurations during flake checks.
       checks.${system} = lib.mapAttrs' (
         desktop: _:
         let
-          profile = if desktop == "plasma" then "framework-amd-ai-300" else "framework-amd-ai-300-${desktop}";
+          profile =
+            if desktop == "plasma" then
+              "framework-intel-core-ultra"
+            else
+              "framework-intel-core-ultra-${desktop}";
         in
         lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
       ) laptopDesktopModules;
