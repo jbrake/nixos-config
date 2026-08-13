@@ -58,5 +58,6 @@
     qbittorrent
     telegram-desktop
     vlc
+    obsidian
   ];
 }

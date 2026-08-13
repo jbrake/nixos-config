@@ -105,7 +105,9 @@ in
     configType = "lua";
     # UWSM, enabled by the NixOS module, owns the graphical systemd session.
     systemd.enable = false;
-    extraLuaFiles."jason-config" = ./hyprland/config.lua;
+    # Home Manager 26.05 supports Lua configuration through extraConfig. Keep
+    # the readable Lua source in its own file and embed it in hyprland.lua.
+    extraConfig = builtins.readFile ./hyprland/config.lua;
   };
 
   programs.caelestia = {

@@ -2,16 +2,12 @@
   description = "Jason's NixOS laptop configurations";
 
   inputs = {
-    # Unstable remains the default package set and supplies the newest kernel
-    # and firmware to the Intel compatibility profile below.
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    # The Intel Framework is smooth on this complete userspace snapshot
-    # (Plasma 6.6.5). Keeping the package set whole avoids mixed Qt/KDE ABIs.
-    nixpkgs-intel-known-good.url = "github:NixOS/nixpkgs/a0374025a863d007d98e3297f6aa46cc3141c2f0";
+    # Keep the complete system on the current stable release. Individual hosts
+    # can still select linuxPackages_latest for recently released hardware.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -62,7 +58,6 @@
         {
           hostname,
           desktop,
-          nixpkgsInput ? nixpkgs,
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
@@ -71,7 +66,7 @@
           # one desktop per VM guest).
           extraModules ? [ ],
         }:
-        nixpkgsInput.lib.nixosSystem {
+        nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
             inherit
@@ -110,7 +105,6 @@
           hostname,
           desktop,
           desktopModule,
-          nixpkgsInput ? nixpkgs,
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
@@ -120,7 +114,6 @@
           inherit
             hostname
             desktop
-            nixpkgsInput
             profile
             username
             homeModule
@@ -167,22 +160,18 @@
         {
           hostname,
           hardwareModule,
-          nixpkgsInput ? nixpkgs,
-          desktopModules ? laptopDesktopModules,
-          plasmaProfile ? hostname,
           enableBackup ? false,
           fingerprintResetMode ? "when-missing",
         }:
         lib.mapAttrs' (
           desktop: desktopModule:
           let
-            profile = if desktop == "plasma" then plasmaProfile else "${hostname}-${desktop}";
+            profile = if desktop == "plasma" then hostname else "${hostname}-${desktop}";
           in
           lib.nameValuePair profile (mkLaptopHost {
             inherit
               hostname
               desktop
-              nixpkgsInput
               profile
               desktopModule
               ;
@@ -201,7 +190,7 @@
               };
             };
           })
-        ) desktopModules;
+        ) laptopDesktopModules;
     in
     {
       nixosConfigurations =
@@ -216,19 +205,6 @@
         // (mkFrameworkLaptopProfiles {
           hostname = "framework-intel-core-ultra";
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
-          nixpkgsInput = inputs.nixpkgs-intel-known-good;
-          enableBackup = true;
-        })
-        # Use this target only to test whether current Plasma has fixed the
-        # Intel UI regression. It shares the real host configuration and UUIDs
-        # but uses the complete current nixpkgs package set.
-        // (mkFrameworkLaptopProfiles {
-          hostname = "framework-intel-core-ultra";
-          hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
-          desktopModules = {
-            plasma = laptopDesktopModules.plasma;
-          };
-          plasmaProfile = "framework-intel-current";
           enableBackup = true;
         })
         // {

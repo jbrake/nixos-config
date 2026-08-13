@@ -36,8 +36,7 @@ to the hardware output, such as `framework-intel-core-ultra-gnome`.
 | Hardware | Base output | Status |
 | --- | --- | --- |
 | Framework 13, AMD Ryzen AI 9 HX 370 | `framework-amd-ai-300` | Retained configuration; no longer deployed |
-| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-core-ultra` | Deployed; known-good Plasma userspace |
-| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-current` | Temporary current-Plasma test target |
+| Framework 13 Pro, Intel Core Ultra Series 3 | `framework-intel-core-ultra` | Deployed |
 
 | Desktop | Output suffix |
 | --- | --- |
@@ -60,6 +59,8 @@ Disposable VM profiles remain independent:
 
 - `flake.lock` pins Nixpkgs, Home Manager, Plasma Manager, Caelestia, hardware
   profiles, and the two AI CLI package sources.
+- Nixpkgs and Home Manager track NixOS 26.05. Physical hosts select the newest
+  kernel available on that stable branch for current Framework hardware.
 - Physical laptops add laptop, virtualization-host, workstation, emulation,
   backup, fingerprint, and desktop-state roles.
 - Guests omit laptop firmware, Bluetooth, VPN, backups, emulation, and nested

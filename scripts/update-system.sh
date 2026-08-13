@@ -51,9 +51,8 @@ trap cleanup EXIT
 echo "Running: nix flake update"
 nix flake update
 
-# A bad update must not strand the lock file (nixpkgs-unstable breaks
-# sometimes): prove the system builds before switching, and put the lock
-# back the way it was if it doesn't.
+# A bad update must not strand the lock file: prove the system builds before
+# switching, and put the lock back the way it was if it does not.
 echo "Verifying the updated inputs build..."
 if ! nix build "path:$repo_root#nixosConfigurations.\"$profile\".config.system.build.toplevel" --no-link; then
   echo "Build failed with updated inputs." >&2
