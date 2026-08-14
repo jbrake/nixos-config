@@ -9,6 +9,10 @@
   # platform while keeping the rest of the system on one coherent package set.
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
+  # Work around repeated beacon loss on the Intel BE211/iwlmld link. Retest
+  # after future kernel and wireless-firmware updates land.
+  networking.networkmanager.wifi.powersave = false;
+
   hardware.cpu.intel.updateMicrocode = lib.mkDefault true;
   services.xserver.videoDrivers = [ "modesetting" ];
 
