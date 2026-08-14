@@ -57,6 +57,7 @@ in
         "/home/${cfg.user}/.local/share/Trash"
         "/home/${cfg.user}/.local/state/home-manager"
         "/home/${cfg.user}/.local/state/nix"
+        "/home/${cfg.user}/Downloads"
         # ROM masters live on the NAS and are reproducible. Keep the adjacent
         # RetroDECK BIOS, saves, states, screenshots, and mutable configuration.
         "/home/${cfg.user}/retrodeck/roms"
@@ -116,7 +117,24 @@ in
       ];
     };
 
-    systemd.services.${serviceName}.onFailure = [ "${failureServiceName}.service" ];
+    systemd.services.${serviceName} = {
+      onFailure = [ "${failureServiceName}.service" ];
+
+      # network-online.target only describes the boot-time network state.  In
+      # particular, it can already be active while Wi-Fi is still reconnecting
+      # after resume.  Retry transient failures long enough for the network and
+      # NAS to become reachable, but stop after roughly two hours so a laptop
+      # away from home does not retry forever.  RestartMode=direct suppresses
+      # OnFailure notifications for the intermediate attempts; the notification
+      # above is sent if the retry limit is ultimately exhausted.
+      startLimitIntervalSec = 3 * 60 * 60;
+      startLimitBurst = 12;
+      serviceConfig = {
+        Restart = "on-failure";
+        RestartMode = "direct";
+        RestartSec = "10min";
+      };
+    };
 
     # Report scheduled failures in the journal, logged-in terminals, and the
     # user's graphical session when one is available.

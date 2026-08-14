@@ -95,6 +95,7 @@ It excludes:
 ~/.local/share/Trash
 ~/.local/state/home-manager
 ~/.local/state/nix
+~/Downloads
 ~/retrodeck/roms (canonical ROM library is stored separately on the NAS)
 Steam game downloads, Workshop content, and shader caches
 directories marked with CACHEDIR.TAG
@@ -455,7 +456,9 @@ explicit snapshot ID. The staged example file will be under:
 
 - A suspended laptop does not wake for a backup. A missed run starts after the
   laptop resumes or boots.
-- If the laptop is away from the NAS, the run fails. Start a manual backup after
+- If Wi-Fi or the NAS is temporarily unavailable, a failed run retries every 10
+  minutes for roughly two hours. Intermediate failures do not send desktop
+  notifications. If all retries are exhausted, start a manual backup after
   returning home.
 - Restic prevents normal sleep while a backup is running, but shutdown, forced
   suspend, or network loss can interrupt it. Run it again if that happens.
