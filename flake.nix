@@ -6,6 +6,11 @@
     # can still select linuxPackages_latest for recently released hardware.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+    # Eden develops faster than the stable NixOS release cadence. Keep only
+    # this emulator on nixpkgs-unstable; update-system.sh advances and verifies
+    # the pin before switching the system.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";

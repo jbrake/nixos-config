@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   username,
   ...
@@ -8,6 +9,20 @@
 # owns its emulator configs and migrates them with each release; NixOS owns the
 # host facilities and converges the Flatpak installation to the declared app.
 let
+  edenPackage = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.eden;
+
+  # Eden currently warns about running natively on Wayland and recommends X11.
+  # Wrap only Eden so the rest of the Plasma session remains native Wayland.
+  edenX11Package = pkgs.symlinkJoin {
+    name = "eden-x11-${edenPackage.version}";
+    paths = [ edenPackage ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/eden --set QT_QPA_PLATFORM xcb
+    '';
+    meta.mainProgram = "eden";
+  };
+
   # Steam derives this stable non-Steam game ID from the shortcut name
   # "RetroDECK" and executable "flatpak". RetroDECK's Steam Tools installs the
   # matching shortcut and its controller templates during first-run setup.
@@ -115,6 +130,7 @@ in
   ];
 
   environment.systemPackages = [
+    edenX11Package
     retrodeckSteamLauncher
     ryubingSteamLauncher
   ];
