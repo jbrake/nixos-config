@@ -49,7 +49,6 @@
     calibre
     capitaine-cursors
     discord
-    firefox
     ghostty
     meld
     pavucontrol
