@@ -10,6 +10,7 @@ let
   cfg = config.jbrake.resticBackup;
   jobName = "${cfg.user}-home";
   serviceName = "restic-backups-${jobName}";
+  successServiceName = "restic-backup-success-${jobName}";
   failureServiceName = "restic-backup-failure-${jobName}";
 in
 {
@@ -118,6 +119,7 @@ in
     };
 
     systemd.services.${serviceName} = {
+      onSuccess = [ "${successServiceName}.service" ];
       onFailure = [ "${failureServiceName}.service" ];
 
       # network-online.target only describes the boot-time network state.  In
@@ -134,6 +136,28 @@ in
         RestartMode = "direct";
         RestartSec = "10min";
       };
+    };
+
+    # Report successful completion to the user's graphical session when one is
+    # available. OnSuccess runs after the backup, retention, and check phases.
+    systemd.services.${successServiceName} = {
+      description = "Notify ${cfg.user} that the Restic backup completed";
+      serviceConfig.Type = "oneshot";
+      script = ''
+        message="Restic backup ${jobName} completed successfully."
+        echo "$message"
+
+        uid="$(${pkgs.coreutils}/bin/id -u ${lib.escapeShellArg cfg.user})"
+        if [[ -S "/run/user/$uid/bus" ]]; then
+          ${pkgs.util-linux}/bin/runuser -u ${lib.escapeShellArg cfg.user} -- \
+            ${pkgs.coreutils}/bin/env \
+              XDG_RUNTIME_DIR="/run/user/$uid" \
+              DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+              ${pkgs.libnotify}/bin/notify-send \
+                --app-name="Restic" --urgency=normal \
+                "Backup complete" "$message" || true
+        fi
+      '';
     };
 
     # Report scheduled failures in the journal, logged-in terminals, and the

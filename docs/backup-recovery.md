@@ -150,7 +150,9 @@ Every scheduled or manually started service backup also applies the retention
 policy and runs `restic check`. It reads a random 5% of stored pack data on each
 run so payload damage is detected over time. A failed scheduled backup also
 sends a critical desktop notification when Jason is logged in and writes to
-logged-in terminals and the system journal.
+logged-in terminals and the system journal. A successful run sends a normal
+desktop notification after the backup, retention, and repository check phases
+all complete.
 
 ## Final Backup Before Reinstalling
 
