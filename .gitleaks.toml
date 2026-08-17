@@ -1,0 +1,14 @@
+title = "nixos-config secret scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "nix-declared-password"
+description = "Nix password or password hash declared directly in source"
+regex = '''(?i)(?:initialPassword|password|initialHashedPassword|hashedPassword)\s*=\s*"[^"]+"'''
+
+[[rules.allowlists]]
+description = "Historical throwaway VM account example"
+regexTarget = "match"
+regexes = ['''initialPassword\s*=\s*"detest"''']
