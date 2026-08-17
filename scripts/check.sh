@@ -23,6 +23,4 @@ deadnix --fail --no-lambda-arg --no-lambda-pattern-names .
 echo "Checking documentation links"
 lychee --offline README.md docs/*.md
 
-echo "Scanning Git history for secrets"
-gitleaks git --redact --no-banner .
-gitleaks dir --redact --no-banner .
+"$script_dir/scan-secrets.sh"

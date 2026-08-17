@@ -271,6 +271,13 @@ Run the same lint, formatting, link, and secret checks used by CI:
 nix develop --command ./scripts/check.sh
 ```
 
+Install the repository's pre-push hook once per clone so Gitleaks checks the
+working tree and full local history before anything reaches GitHub:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 Evaluate every host and build all five Intel desktop configurations:
 
 ```bash
@@ -296,8 +303,9 @@ UUIDs, package choices, a private-LAN NAS address, and a public SSH host key.
 Those values cannot authenticate to the NAS or decrypt the Restic repository.
 
 Never commit private SSH keys, authentication tokens, browser profiles, VPN
-credentials, application state, or files under `/var/lib/secrets`. CI scans both
-the current tree and full Git history with Gitleaks.
+credentials, application state, or files under `/var/lib/secrets`. The pre-push
+hook scans before publication, and CI scans the current tree and full Git history
+on every branch with Gitleaks.
 
 ## License
 

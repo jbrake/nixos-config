@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+hook_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd -- "$hook_dir/.." && pwd)"
+
+if command -v gitleaks >/dev/null 2>&1; then
+  exec "$repo_root/scripts/scan-secrets.sh"
+fi
+
+exec nix develop "path:$repo_root" --command "$repo_root/scripts/scan-secrets.sh"
