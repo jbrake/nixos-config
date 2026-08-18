@@ -25,6 +25,12 @@
     remotePlay.openFirewall = true;
   };
 
+  # LocalSend uses the same default port for UDP discovery and TCP transfers.
+  networking.firewall = {
+    allowedTCPPorts = [ 53317 ];
+    allowedUDPPorts = [ 53317 ];
+  };
+
   fonts = {
     packages = with pkgs; [
       nerd-fonts.jetbrains-mono
@@ -50,6 +56,7 @@
     capitaine-cursors
     discord
     ghostty
+    localsend
     meld
     pavucontrol
     prismlauncher
