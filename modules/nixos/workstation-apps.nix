@@ -51,7 +51,6 @@
 
   environment.systemPackages = with pkgs; [
     alacritty
-    brave
     calibre
     capitaine-cursors
     discord

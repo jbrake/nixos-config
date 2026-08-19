@@ -25,7 +25,6 @@
   hardware.graphics.enable = true;
 
   environment.systemPackages = with pkgs; [
-    brave
     ghostty
     # Hyprland's default config spawns kitty (SUPER+Q); keep it until a
     # riced config takes over.

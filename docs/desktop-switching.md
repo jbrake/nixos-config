@@ -101,7 +101,7 @@ desktop automatically.
 These remain shared and are never rolled backward by a desktop switch:
 
 - Documents, downloads, pictures, and repositories
-- Brave, Discord, Telegram, Steam, and PrismLauncher
+- Brave Origin, Discord, Telegram, Steam, and PrismLauncher
 - Codex, Claude, SSH, Git, and shell data
 
 These are saved separately for all five desktops:
@@ -136,7 +136,7 @@ The default enabled extensions are:
 
 Each extension can be turned off independently in Extension Manager. Tiling
 Shell also exposes its layouts and behavior from its panel indicator. The dock
-favorites are Brave, Files, Ghostty, Discord, and Steam.
+favorites are Brave Origin, Files, Ghostty, Discord, and Steam.
 
 GNOME also starts with centered windows, four workspaces, a weekday clock,
 battery percentage, the purple accent color, window control buttons, disabled
@@ -166,7 +166,7 @@ Start with these keys:
 Super or Super+Space   launcher, settings, wallpapers, and schemes
 Super+/                complete graphical shortcut guide
 Super+Enter            Ghostty
-Super+B                Brave
+Super+B                Brave Origin
 Super+E                Files
 Super+Q                close the focused window
 Super+1 through 9      change workspace

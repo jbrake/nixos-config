@@ -60,7 +60,7 @@ in
     ++ extensionSchemaPackages;
     extraGSettingsOverrides = ''
       [org.gnome.shell]
-      favorite-apps=['brave-browser.desktop', 'org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'discord.desktop', 'steam.desktop']
+      favorite-apps=['brave-origin.desktop', 'org.gnome.Nautilus.desktop', 'com.mitchellh.ghostty.desktop', 'discord.desktop', 'steam.desktop']
       enabled-extensions=[${enabledExtensionUuids}]
 
       [org.gnome.desktop.interface]

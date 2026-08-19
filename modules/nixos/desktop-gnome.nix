@@ -35,15 +35,14 @@
 
   hardware.graphics.enable = true;
 
-  # Skip the first-run tour and GNOME's browser; brave matches the
-  # BROWSER/mime defaults in home.nix, ghostty the TERMINAL default.
+  # Skip the first-run tour and GNOME's browser; Brave Origin and Ghostty are
+  # supplied by the shared browser and terminal configuration.
   environment.gnome.excludePackages = with pkgs; [
     epiphany
     gnome-tour
   ];
 
   environment.systemPackages = with pkgs; [
-    brave
     ghostty
     gnome-tweaks
   ];

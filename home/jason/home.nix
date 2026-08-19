@@ -103,7 +103,7 @@ in
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {
-    BROWSER = "brave";
+    BROWSER = "brave-origin";
     EDITOR = "vim";
     TERMINAL = "ghostty";
   };
@@ -116,9 +116,9 @@ in
       "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
     };
     defaultApplications = {
-      "text/html" = "brave-browser.desktop";
-      "x-scheme-handler/http" = "brave-browser.desktop";
-      "x-scheme-handler/https" = "brave-browser.desktop";
+      "text/html" = "brave-origin.desktop";
+      "x-scheme-handler/http" = "brave-origin.desktop";
+      "x-scheme-handler/https" = "brave-origin.desktop";
       "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
       "x-scheme-handler/tonsite" = "org.telegram.desktop.desktop";
     }

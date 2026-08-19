@@ -23,7 +23,7 @@ let
 
       APPS
         Super+Enter or Super+T     Ghostty terminal
-        Super+B                    Brave browser
+        Super+B                    Brave Origin browser
         Super+E                    Files
         Super+V                    Clipboard history
         Super+.                    Emoji picker

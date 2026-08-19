@@ -119,7 +119,7 @@ bind("SUPER + L", command("lock-hyprland"), "Lock the laptop")
 -- Familiar application shortcuts.
 bind("SUPER + Return", command("ghostty"), "Open Ghostty terminal")
 bind("SUPER + T", command("ghostty"), "Open Ghostty terminal")
-bind("SUPER + B", command("brave"), "Open Brave browser")
+bind("SUPER + B", command("brave-origin"), "Open Brave Origin browser")
 bind("SUPER + E", command("nautilus --new-window"), "Open Files")
 bind("SUPER + V", command("caelestia clipboard"), "Open clipboard history")
 bind("SUPER + Period", command("caelestia emoji -p"), "Open emoji picker")

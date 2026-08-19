@@ -79,9 +79,10 @@ retention:   7 daily, 5 weekly, 12 monthly, 3 yearly
 protected:   snapshots tagged archive
 ```
 
-The backup includes documents, all five desktop state capsules, Brave profiles
-and extensions, PrismLauncher instances and Minecraft worlds, Codex sessions,
-SSH keys, desktop credential stores, and other files under `/home/jason`.
+The backup includes documents, all five desktop state capsules, Brave Origin
+profiles and extensions, PrismLauncher instances and Minecraft worlds, Codex
+sessions, SSH keys, desktop credential stores, and other files under
+`/home/jason`.
 
 Desktop capsules and Restic serve different purposes. Capsules automatically
 preserve each desktop's latest local state during switching; Restic keeps
@@ -403,11 +404,11 @@ sudo nixos-rebuild switch --flake ".#$profile"
 sudo reboot
 ```
 
-Log in and check documents, Brave, the selected desktop, PrismLauncher worlds,
-SSH keys, and other important data. Applications may require authentication
-again. See [Switching Desktop Environments](desktop-switching.md) to change
-desktops or perform a clean GNOME migration without restoring other desktop
-settings.
+Log in and check documents, Brave Origin, the selected desktop, PrismLauncher
+worlds, SSH keys, and other important data. Applications may require
+authentication again. See
+[Switching Desktop Environments](desktop-switching.md) to change desktops or
+perform a clean GNOME migration without restoring other desktop settings.
 
 The fresh hardware configuration is now the authoritative copy for this
 installation. Review, commit, and push it so a later clone contains the current
@@ -467,6 +468,6 @@ explicit snapshot ID. The staged example file will be under:
 - Backups are file-level snapshots, not a single atomic snapshot of every open
   application database. Log out for the cleanest planned final backup.
 - The tested restore on 2026-07-10 successfully recovered the full home backup,
-  including Brave, Plasma, PrismLauncher instances, and Minecraft worlds.
+  including Brave Origin, Plasma, PrismLauncher instances, and Minecraft worlds.
 - The NAS is in the same physical location, so this is not yet a complete 3-2-1
   backup. An eventual off-site copy is still recommended.

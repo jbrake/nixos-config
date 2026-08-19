@@ -19,7 +19,6 @@
   hardware.graphics.enable = true;
 
   environment.systemPackages = with pkgs; [
-    brave
     ghostty
   ];
 }

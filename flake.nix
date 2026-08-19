@@ -6,9 +6,9 @@
     # can still select linuxPackages_latest for recently released hardware.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    # Eden develops faster than the stable NixOS release cadence. Keep only
-    # this emulator on nixpkgs-unstable; update-system.sh advances and verifies
-    # the pin before switching the system.
+    # Eden and Brave Origin develop faster than the stable NixOS release
+    # cadence. Keep only these packages on nixpkgs-unstable; update-system.sh
+    # advances and verifies the pin before switching the system.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
@@ -90,6 +90,7 @@
           };
           modules = extraModules ++ [
             ./modules/nixos/base.nix
+            ./modules/nixos/brave-origin.nix
             ./modules/nixos/backup.nix
             ./modules/nixos/containers.nix
             ./hosts/${hostname}/configuration.nix

@@ -15,10 +15,9 @@
 
   hardware.graphics.enable = true;
 
-  # brave matches the BROWSER/mime defaults in home.nix, ghostty the
-  # TERMINAL default. COSMIC brings its own terminal/files/editor.
+  # Brave Origin matches the BROWSER/mime defaults in home.nix, and Ghostty
+  # is the TERMINAL default. COSMIC brings its own terminal/files/editor.
   environment.systemPackages = with pkgs; [
-    brave
     ghostty
   ];
 }
