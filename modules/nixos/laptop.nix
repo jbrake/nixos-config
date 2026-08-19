@@ -11,6 +11,11 @@ _:
     upower.enable = true;
     power-profiles-daemon.enable = true;
     flatpak.enable = true;
+    printing = {
+      enable = true;
+      # Keep CUPS idle until an application connects to print.
+      startWhenNeeded = true;
+    };
     tailscale = {
       enable = true;
       openFirewall = true;

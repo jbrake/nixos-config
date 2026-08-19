@@ -16,6 +16,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Prebuilt executable index used by comma for running ad-hoc commands.
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # RetroDECK is intentionally distributed as a Flatpak. This module keeps
     # that one external application declarative without treating every Flatpak
     # installed by hand as NixOS-owned state.
@@ -87,6 +93,7 @@
             ./modules/nixos/backup.nix
             ./modules/nixos/containers.nix
             ./hosts/${hostname}/configuration.nix
+            inputs.nix-index-database.nixosModules.default
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;

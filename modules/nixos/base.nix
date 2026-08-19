@@ -19,6 +19,13 @@
     options = "--delete-older-than 14d";
   };
 
+  # Friendlier commands for rebuilding, searching, and inspecting changes.
+  # Keep cleanup under nix.gc so there is only one garbage-collection policy.
+  programs.nh.enable = true;
+
+  # Run occasional nixpkgs commands with `, command` without installing them.
+  programs.nix-index-database.comma.enable = true;
+
   nixpkgs.config.allowUnfree = true;
 
   networking.hostName = hostname;
