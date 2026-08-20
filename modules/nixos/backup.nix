@@ -154,7 +154,7 @@ in
               XDG_RUNTIME_DIR="/run/user/$uid" \
               DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
               ${pkgs.libnotify}/bin/notify-send \
-                --app-name="Restic" --urgency=normal \
+                --app-name="Restic" --urgency=normal --expire-time=0 \
                 "Backup complete" "$message" || true
         fi
       '';
@@ -177,7 +177,7 @@ in
               XDG_RUNTIME_DIR="/run/user/$uid" \
               DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
               ${pkgs.libnotify}/bin/notify-send \
-                --app-name="Restic" --urgency=critical \
+                --app-name="Restic" --urgency=critical --expire-time=0 \
                 "Backup failed" "$message" || true
         fi
       '';
