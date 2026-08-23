@@ -19,6 +19,31 @@ if [[ "$home" != /* || "$home" == "/" || ! -d "$home" ]]; then
   exit 1
 fi
 
+home="$(realpath -e -- "$home")"
+
+assert_safe_parent_chain() {
+  local relative="$1"
+  local parent="${relative%/*}"
+  [[ "$parent" != "$relative" ]] || return 0
+
+  local current="$home"
+  local component
+  local -a components=()
+  IFS='/' read -r -a components <<<"$parent"
+  for component in "${components[@]}"; do
+    current="$current/$component"
+    if [[ -L "$current" ]]; then
+      echo "Refusing managed path with a symlinked parent: $current" >&2
+      exit 1
+    fi
+    if [[ -e "$current" && ! -d "$current" ]]; then
+      echo "Refusing managed path with a non-directory parent: $current" >&2
+      exit 1
+    fi
+  done
+}
+
+assert_safe_parent_chain ".local/state/desktop-profiles"
 state_root="$home/.local/state/desktop-profiles"
 marker="$state_root/current"
 pending="$state_root/pending"
@@ -63,6 +88,7 @@ add_path() {
     echo "Refusing unsafe managed path: $relative" >&2
     exit 1
   fi
+  assert_safe_parent_chain "$relative"
   if [[ -z "${seen[$relative]:-}" && ( -e "$home/$relative" || -L "$home/$relative" ) ]]; then
     seen[$relative]=1
     managed_paths+=("$relative")

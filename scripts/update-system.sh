@@ -3,6 +3,8 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/.." && pwd)"
+# shellcheck source=scripts/desktop-profile-guard.sh
+source "$script_dir/desktop-profile-guard.sh"
 
 if [[ -r /etc/nixos-config-profile ]]; then
   read -r default_profile </etc/nixos-config-profile
@@ -21,6 +23,10 @@ if ! host="$(nix eval --raw "path:$repo_root#nixosConfigurations.\"$profile\".co
   echo "Run 'nix flake show' to list available profiles." >&2
   exit 1
 fi
+
+guard_framework_live_desktop \
+  "$default_profile" "$profile" "$host" "$(hostname)" \
+  "$script_dir/switch-desktop.sh"
 
 hardware_file="$repo_root/hosts/$host/hardware-configuration.nix"
 

@@ -94,7 +94,8 @@ Always use the switch script for routine desktop changes. It builds the target
 with `nixos-rebuild boot` so no display manager or home state changes under the
 running graphical session. After the reboot, `rebuild.sh` and
 `update-system.sh` read `/etc/nixos-config-profile` and retain the active
-desktop automatically.
+desktop automatically. Both helpers refuse an explicit profile that would
+change the active Framework desktop live.
 
 ## Shared and Isolated State
 
