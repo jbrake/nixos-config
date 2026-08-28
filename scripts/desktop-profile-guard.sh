@@ -20,6 +20,9 @@ framework_desktop_for_profile() {
     "$host-hyprland")
       printf '%s\n' hyprland
       ;;
+    "$host-nixarchy")
+      printf '%s\n' nixarchy
+      ;;
     *)
       return 1
       ;;

@@ -11,7 +11,7 @@ reboot=false
 
 usage() {
   cat <<EOF
-Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland> [--backup] [--reboot]
+Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland|nixarchy> [--backup] [--reboot]
 
   --backup  Wait for a Restic home backup before scheduling the switch.
   --reboot  Reboot immediately after the target system builds.
@@ -51,9 +51,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic | hyprland) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland | nixarchy) ;;
   *)
-    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', or 'hyprland'." >&2
+    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', 'hyprland', or 'nixarchy'." >&2
     exit 1
     ;;
 esac
@@ -72,11 +72,27 @@ case "$host" in
     ;;
 esac
 
-if [[ "$target" == "plasma" ]]; then
-  target_profile="$host"
-else
-  target_profile="$host-$target"
-fi
+case "$target" in
+  plasma)
+    target_profile="$host"
+    target_state="plasma"
+    ;;
+  nixarchy)
+    if [[ "$host" != "framework-intel-core-ultra" ]]; then
+      echo "The Nixarchy profile exists only for framework-intel-core-ultra." >&2
+      exit 1
+    fi
+    target_profile="$host-nixarchy"
+    # Plasma and Omarchy are sessions in the same system profile. Keep the
+    # established Plasma capsule rather than pretending this is a sixth
+    # isolated desktop-state tree.
+    target_state="plasma"
+    ;;
+  *)
+    target_profile="$host-$target"
+    target_state="$target"
+    ;;
+esac
 
 if [[ ! -r /etc/nixos-config-profile ]]; then
   echo "Missing /etc/nixos-config-profile. Apply the current configuration first." >&2
@@ -87,18 +103,27 @@ current_profile="$(</etc/nixos-config-profile)"
 case "$current_profile" in
   "$host")
     current="plasma"
+    current_state="plasma"
     ;;
   "$host-gnome")
     current="gnome"
+    current_state="gnome"
     ;;
   "$host-cinnamon")
     current="cinnamon"
+    current_state="cinnamon"
     ;;
   "$host-cosmic")
     current="cosmic"
+    current_state="cosmic"
     ;;
   "$host-hyprland")
     current="hyprland"
+    current_state="hyprland"
+    ;;
+  "$host-nixarchy")
+    current="nixarchy"
+    current_state="plasma"
     ;;
   *)
     echo "Unsupported active profile: $current_profile" >&2
@@ -121,7 +146,7 @@ marker="$state_root/current"
 if [[ ! -f "$marker" ]]; then
   printf '%s\n' "$current" >"$marker"
   chmod 600 "$marker"
-elif [[ "$(<"$marker")" != "$current" ]]; then
+elif [[ "$(<"$marker")" != "$current_state" ]]; then
   echo "Desktop state marker does not match the running profile." >&2
   echo "Reboot once before scheduling another desktop switch." >&2
   exit 1
@@ -137,7 +162,13 @@ nixos-rebuild boot --flake "path:$repo_root#$target_profile"
 
 echo
 echo "$target is ready for the next boot."
-echo "At boot, the current $current state will be saved and the last $target state restored."
+if [[ "$target" == "nixarchy" ]]; then
+  echo "Plasma remains the default; SDDM also offers Omarchy for Jason."
+elif [[ "$current_state" == "$target_state" ]]; then
+  echo "At boot, the existing $target_state desktop state will be kept."
+else
+  echo "At boot, the current $current state will be saved and the last $target state restored."
+fi
 echo "Personal files and shared application profiles are not moved."
 
 if [[ "$reboot" == true ]]; then
