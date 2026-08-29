@@ -177,12 +177,14 @@ in
       ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="609c", TEST=="power/control", ATTR{power/control}="on"
     '';
 
-    # If the lock screen is verifying while sleep begins, fprintd can keep the
-    # reader busy and fail after resume. Stop it before sleep; D-Bus starts it
-    # again on the next fingerprint request.
-    powerManagement.powerDownCommands = lib.mkAfter ''
-      ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
-    '';
+    # Plasma keeps a dedicated fingerprint PAM worker alive while locked.
+    # Stopping fprintd here would terminate that worker across suspend. Other
+    # desktops retain the stop-before-sleep workaround.
+    powerManagement.powerDownCommands = lib.mkIf (!config.services.desktopManager.plasma6.enable) (
+      lib.mkAfter ''
+        ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
+      ''
+    );
 
     # Discover the controller at boot so recovery still knows the validated
     # target while the USB child device is missing. This is the declarative
@@ -235,11 +237,17 @@ in
     # NixOS defaults <service>.fprintAuth = services.fprintd.enable for EVERY
     # PAM service, so everything except sudo must be switched off explicitly.
     #
-    # The Plasma lock screen does NOT need pam_fprintd: kscreenlocker talks to
-    # fprintd natively over D-Bus (via the separate "kde-fingerprint" PAM
-    # service, which nixpkgs manages) in parallel with the password prompt.
-    # Leave "kde" and "kde-fingerprint" alone — upstream configures them.
+    # Plasma runs the separate "kde-fingerprint" PAM service in parallel with
+    # the password prompt. Keep that worker alive for the lifetime of the lock
+    # screen so repeated suspend cycles cannot strand it in a timed-out state.
     security.pam.services = {
+      "kde-fingerprint".rules.auth.fprintd.settings =
+        lib.mkIf config.services.desktopManager.plasma6.enable
+          {
+            timeout = -1;
+            "max-tries" = -1;
+          };
+
       # sudo: fprintAuth left at its default (true). NixOS generates
       # "auth sufficient pam_fprintd.so" ahead of pam_unix — scan to auth,
       # or just type the password; either works. Blocking is fine in a
