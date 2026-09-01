@@ -11,10 +11,6 @@ HOST-cosmic      COSMIC
 HOST-hyprland    Hyprland with Caelestia
 ```
 
-The deployed Intel laptop additionally exposes `HOST-nixarchy`. It retains
-Plasma and the Breeze SDDM greeter, then adds Omarchy as another session for
-Jason. See the [Nixarchy guide](nixarchy.md).
-
 Both share the same personal files, applications, hardware, backup,
 containers, and virtualization. A boot-time service keeps only
 desktop-sensitive state in separate capsules:
@@ -64,7 +60,6 @@ sudo ./scripts/switch-desktop.sh gnome
 sudo ./scripts/switch-desktop.sh cinnamon
 sudo ./scripts/switch-desktop.sh cosmic
 sudo ./scripts/switch-desktop.sh hyprland
-sudo ./scripts/switch-desktop.sh nixarchy --backup
 ```
 
 A normal switch follows this sequence:
@@ -83,13 +78,6 @@ sudo ./scripts/switch-desktop.sh plasma
 ```
 
 Every later switch restores the target desktop where it was left.
-
-Nixarchy is different from the other alternatives: Plasma and Omarchy are two
-login sessions inside the same NixOS profile. They intentionally share Jason's
-home, while a first-run guard prevents Omarchy from remapping Plasma's Desktop
-folder. Choosing Plasma at SDDM does not require another system switch. Use the
-switch script with `plasma` only to remove the Nixarchy profile from future
-boots.
 
 Useful optional flags are:
 

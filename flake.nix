@@ -40,14 +40,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Omarchy vendored for NixOS. The lock file controls when updates arrive;
-    # upstream owns the Arch-to-Nix compatibility layer.
-    nixarchy = {
-      url = "github:olafkfreund/nixarchy";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
-
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # AI CLIs come from dedicated, independently pinned flakes because they
@@ -183,7 +175,6 @@
           hostname,
           hardwareModule,
           enableBackup ? false,
-          enableNixarchy ? false,
           fingerprintResetMode ? "when-missing",
         }:
         let
@@ -202,7 +193,7 @@
             };
           };
         in
-        (lib.mapAttrs' (
+        lib.mapAttrs' (
           desktop: desktopModule:
           let
             profile = if desktop == "plasma" then hostname else "${hostname}-${desktop}";
@@ -216,16 +207,7 @@
               ;
             extraModules = commonExtraModules;
           })
-        ) laptopDesktopModules)
-        // lib.optionalAttrs enableNixarchy {
-          "${hostname}-nixarchy" = mkLaptopHost {
-            inherit hostname;
-            desktop = "plasma";
-            profile = "${hostname}-nixarchy";
-            desktopModule = ./modules/nixos/desktop-nixarchy.nix;
-            extraModules = commonExtraModules;
-          };
-        };
+        ) laptopDesktopModules;
     in
     {
       nixosConfigurations =
@@ -241,7 +223,6 @@
           hostname = "framework-intel-core-ultra";
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
           enableBackup = true;
-          enableNixarchy = true;
         })
         // {
           # The GNOME guest keeps its historical name: the installed VM's
@@ -285,29 +266,16 @@
 
       # Build every laptop desktop role on deployed Intel hardware in CI. Nix
       # also evaluates all retained AMD and VM configurations during flake checks.
-      checks.${system} =
-        (lib.mapAttrs' (
-          desktop: _:
-          let
-            profile =
-              if desktop == "plasma" then
-                "framework-intel-core-ultra"
-              else
-                "framework-intel-core-ultra-${desktop}";
-          in
-          lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
-        ) laptopDesktopModules)
-        // {
-          framework-intel-core-ultra-nixarchy =
-            let
-              nixarchyConfig = self.nixosConfigurations.framework-intel-core-ultra-nixarchy.config;
-            in
-            assert nixarchyConfig.services.displayManager.defaultSession == "plasma";
-            assert nixarchyConfig.services.displayManager.sddm.theme == "breeze";
-            assert builtins.elem "omarchy" nixarchyConfig.services.displayManager.sessionData.sessionNames;
-            assert nixarchyConfig.home-manager.users.jason.programs.nixarchy.enable;
-            assert !nixarchyConfig.programs.nixarchy.preinstalls;
-            nixarchyConfig.system.build.toplevel;
-        };
+      checks.${system} = lib.mapAttrs' (
+        desktop: _:
+        let
+          profile =
+            if desktop == "plasma" then
+              "framework-intel-core-ultra"
+            else
+              "framework-intel-core-ultra-${desktop}";
+        in
+        lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
+      ) laptopDesktopModules;
     };
 }

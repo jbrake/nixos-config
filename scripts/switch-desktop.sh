@@ -11,7 +11,7 @@ reboot=false
 
 usage() {
   cat <<EOF
-Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland|nixarchy> [--backup] [--reboot]
+Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland> [--backup] [--reboot]
 
   --backup  Wait for a Restic home backup before scheduling the switch.
   --reboot  Reboot immediately after the target system builds.
@@ -51,9 +51,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic | hyprland | nixarchy) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland) ;;
   *)
-    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', 'hyprland', or 'nixarchy'." >&2
+    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', or 'hyprland'." >&2
     exit 1
     ;;
 esac
@@ -75,17 +75,6 @@ esac
 case "$target" in
   plasma)
     target_profile="$host"
-    target_state="plasma"
-    ;;
-  nixarchy)
-    if [[ "$host" != "framework-intel-core-ultra" ]]; then
-      echo "The Nixarchy profile exists only for framework-intel-core-ultra." >&2
-      exit 1
-    fi
-    target_profile="$host-nixarchy"
-    # Plasma and Omarchy are sessions in the same system profile. Keep the
-    # established Plasma capsule rather than pretending this is a sixth
-    # isolated desktop-state tree.
     target_state="plasma"
     ;;
   *)
@@ -122,6 +111,8 @@ case "$current_profile" in
     current_state="hyprland"
     ;;
   "$host-nixarchy")
+    # Migration path for systems activated before Nixarchy was removed from
+    # this flake. It is a source profile only and can no longer be targeted.
     current="nixarchy"
     current_state="plasma"
     ;;
@@ -162,9 +153,7 @@ nixos-rebuild boot --flake "path:$repo_root#$target_profile"
 
 echo
 echo "$target is ready for the next boot."
-if [[ "$target" == "nixarchy" ]]; then
-  echo "Plasma remains the default; SDDM also offers Omarchy for Jason."
-elif [[ "$current_state" == "$target_state" ]]; then
+if [[ "$current_state" == "$target_state" ]]; then
   echo "At boot, the existing $target_state desktop state will be kept."
 else
   echo "At boot, the current $current state will be saved and the last $target state restored."

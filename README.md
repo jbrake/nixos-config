@@ -45,7 +45,6 @@ to the hardware output, such as `framework-intel-core-ultra-gnome`.
 | Cinnamon | `-cinnamon` |
 | COSMIC | `-cosmic` |
 | Hyprland with Caelestia | `-hyprland` |
-| Plasma plus Nixarchy (Intel only) | `-nixarchy` |
 
 Disposable VM profiles remain independent:
 
@@ -59,9 +58,7 @@ Disposable VM profiles remain independent:
 ## Architecture
 
 - `flake.lock` pins Nixpkgs, Home Manager, Plasma Manager, Caelestia, hardware
-  profiles, Nixarchy, and the two AI CLI package sources.
-- [Nixarchy integration](docs/nixarchy.md) consumes the upstream NixOS port
-  directly and adds Omarchy beside Plasma without maintaining a local fork.
+  profiles, and the two AI CLI package sources.
 - Nixpkgs and Home Manager track NixOS 26.05. Physical hosts select the newest
   kernel available on that stable branch for current Framework hardware.
 - Physical laptops add laptop, virtualization-host, workstation, emulation,
@@ -239,7 +236,6 @@ sudo ./scripts/switch-desktop.sh gnome
 sudo ./scripts/switch-desktop.sh cinnamon
 sudo ./scripts/switch-desktop.sh cosmic
 sudo ./scripts/switch-desktop.sh hyprland
-sudo ./scripts/switch-desktop.sh nixarchy --backup
 ```
 
 Use the same command with `plasma` to return. Personal files and application
