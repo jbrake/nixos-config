@@ -1,8 +1,13 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 
 # Applications and supporting services used on either laptop desktop. Keep
 # desktop-specific tools in the individual desktop role modules.
 let
+  chatgptPkgs = import inputs.chatgpt-nixpkgs {
+    inherit (pkgs.stdenv.hostPlatform) system;
+    config.allowUnfreePredicate = package: pkgs.lib.getName package == "chatgpt";
+  };
+  inherit (chatgptPkgs) chatgpt;
   tone3000 = pkgs.callPackage ../../packages/tone3000.nix { };
 in
 {
@@ -57,6 +62,7 @@ in
     alacritty
     calibre
     capitaine-cursors
+    chatgpt
     discord
     ghostty
     localsend

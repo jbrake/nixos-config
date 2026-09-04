@@ -11,6 +11,11 @@
     # advances and verifies the pin before switching the system.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # Temporary Linux package source for the official ChatGPT desktop preview.
+    # Drop this input once NixOS/nixpkgs#551713 reaches nixos-26.05 and use
+    # pkgs.chatgpt directly; that attribute is currently the macOS-only app.
+    chatgpt-nixpkgs.url = "github:Moraxyc/nixpkgs/340fc2755c92977c6f56108b0c982f76dfd184c0";
+
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";

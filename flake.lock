@@ -47,6 +47,22 @@
         "type": "github"
       }
     },
+    "chatgpt-nixpkgs": {
+      "locked": {
+        "lastModified": 1788504026,
+        "narHash": "sha256-OKGrnNzBCQ7gaNW7SIGpCoUy7MTlVwyiFGQTwGwbO78=",
+        "owner": "Moraxyc",
+        "repo": "nixpkgs",
+        "rev": "340fc2755c92977c6f56108b0c982f76dfd184c0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Moraxyc",
+        "repo": "nixpkgs",
+        "rev": "340fc2755c92977c6f56108b0c982f76dfd184c0",
+        "type": "github"
+      }
+    },
     "claude-code-nix": {
       "inputs": {
         "nixpkgs": "nixpkgs",
@@ -325,6 +341,7 @@
     "root": {
       "inputs": {
         "caelestia-shell": "caelestia-shell",
+        "chatgpt-nixpkgs": "chatgpt-nixpkgs",
         "claude-code-nix": "claude-code-nix",
         "codex-cli-nix": "codex-cli-nix",
         "home-manager": "home-manager",
