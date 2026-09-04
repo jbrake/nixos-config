@@ -2,6 +2,9 @@
 
 # Applications and supporting services used on either laptop desktop. Keep
 # desktop-specific tools in the individual desktop role modules.
+let
+  tone3000 = pkgs.callPackage ../../packages/tone3000.nix { };
+in
 {
   services.xserver.enable = true;
   services.xserver.xkb.layout = "us";
@@ -50,6 +53,7 @@
   };
 
   environment.systemPackages = with pkgs; [
+    vscode
     alacritty
     calibre
     capitaine-cursors
@@ -62,6 +66,7 @@
     proton-vpn
     qbittorrent
     telegram-desktop
+    tone3000
     vlc
     obsidian
   ];

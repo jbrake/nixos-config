@@ -9,12 +9,14 @@
 }:
 
 let
-  isLaptopHyprland =
-    desktop == "hyprland"
-    && builtins.elem hostname [
-      "framework-amd-ai-300"
-      "framework-intel-core-ultra"
-    ];
+  isLaptop = builtins.elem hostname [
+    "framework-amd-ai-300"
+    "framework-intel-core-ultra"
+  ];
+
+  isLaptopHyprland = desktop == "hyprland" && isLaptop;
+
+  tone3000 = pkgs.callPackage ../../packages/tone3000.nix { };
 
   # KWin stores touchpad settings per physical device. Keep the preferences
   # portable and isolate the hardware identity here, so a future laptop only
@@ -188,6 +190,12 @@ in
   xdg.configFile."alacritty/alacritty.toml".source = ./alacritty/alacritty.toml;
   xdg.configFile."ghostty/config".source = ./ghostty/config;
   xdg.configFile."ghostty/themes/jason-nord".source = ./ghostty/themes/jason-nord;
+
+  # The upstream installer writes factory presets into the user's config
+  # directory; expose the immutable packaged copies there instead.
+  home.file = lib.optionalAttrs isLaptop {
+    ".config/TONE3000/Presets/Factory".source = "${tone3000}/share/tone3000/factory-presets";
+  };
 
   home.packages =
     # From dedicated flakes, not nixpkgs — see the inputs comment in flake.nix.

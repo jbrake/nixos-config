@@ -254,11 +254,16 @@
 
       formatter.${system} = pkgs.nixfmt-tree;
 
+      # Local packages are exposed so standard update tooling can discover and
+      # update their source versions and hashes.
+      packages.${system}.tone3000 = pkgs.callPackage ./packages/tone3000.nix { };
+
       devShells.${system}.default = pkgs.mkShellNoCC {
         packages = with pkgs; [
           deadnix
           gitleaks
           lychee
+          nix-update
           shellcheck
           statix
         ];

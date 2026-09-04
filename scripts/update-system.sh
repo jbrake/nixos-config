@@ -39,16 +39,19 @@ fi
 cd "$repo_root"
 
 lock_backup="$(mktemp)"
+tone3000_backup="$(mktemp)"
 cp --preserve=mode,timestamps flake.lock "$lock_backup"
-restore_lock=true
+cp --preserve=mode,timestamps packages/tone3000.nix "$tone3000_backup"
+restore_updates=true
 
 cleanup() {
   status=$?
-  if [[ "$restore_lock" == true && $status -ne 0 ]]; then
-    echo "Update failed — restoring the previous flake.lock." >&2
+  if [[ "$restore_updates" == true && $status -ne 0 ]]; then
+    echo "Update failed — restoring the previous inputs and packages." >&2
     cp "$lock_backup" flake.lock
+    cp "$tone3000_backup" packages/tone3000.nix
   fi
-  rm -f "$lock_backup"
+  rm -f "$lock_backup" "$tone3000_backup"
   trap - EXIT
   exit "$status"
 }
@@ -57,8 +60,14 @@ trap cleanup EXIT
 echo "Running: nix flake update"
 nix flake update
 
-# A bad update must not strand the lock file: prove the system builds before
-# switching, and put the lock back the way it was if it does not.
+echo "Checking TONE3000 for a new GitHub release..."
+nix develop --command nix-update tone3000 \
+  --flake \
+  --url https://github.com/tone-3000/tone3000-plugin \
+  --override-filename packages/tone3000.nix
+
+# A bad update must not strand the lock file or package expression: prove the
+# system builds before switching, and restore both if it does not.
 echo "Verifying the updated inputs build..."
 if ! nix build "path:$repo_root#nixosConfigurations.\"$profile\".config.system.build.toplevel" --no-link; then
   echo "Build failed with updated inputs." >&2
@@ -66,7 +75,7 @@ if ! nix build "path:$repo_root#nixosConfigurations.\"$profile\".config.system.b
   exit 1
 fi
 
-restore_lock=false
+restore_updates=false
 
 echo "Running: sudo nixos-rebuild switch --flake $flake_ref"
 sudo nixos-rebuild switch --flake "$flake_ref"
