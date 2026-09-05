@@ -165,26 +165,136 @@ in
     + lib.optionalString isLaptopHyprland ''
       test -r ~/.local/state/caelestia/sequences.txt; and cat ~/.local/state/caelestia/sequences.txt
     '';
-    functions.fish_prompt = ''
-      set -l last_status $status
+    shellAbbrs = {
+      gs = "git status --short --branch";
+      gd = "git diff";
+      gds = "git diff --staged";
+      gl = "git log --oneline --graph --decorate -20";
+      lg = "lazygit";
+    };
+  };
 
-      set_color green
-      echo -n "$USER "
-      set_color $fish_color_cwd
-      echo -n (prompt_pwd)
-      set_color normal
+  programs.starship = {
+    enable = true;
+    enableFishIntegration = true;
+    settings = {
+      add_newline = true;
+      format = "$username$hostname$directory$git_branch$git_commit$git_state$git_status$nix_shell$python$nodejs$rust$cmd_duration$status$line_break$character";
+      directory = {
+        style = "bold cyan";
+        truncation_length = 3;
+        truncate_to_repo = true;
+        read_only = " ro";
+      };
+      git_branch = {
+        symbol = " ";
+        style = "bold purple";
+        format = "[$symbol$branch(:$remote_branch)]($style) ";
+      };
+      git_commit = {
+        tag_disabled = false;
+      };
+      git_status = {
+        format = "([\\[$all_status$ahead_behind\\]]($style) )";
+        style = "yellow";
+        conflicted = "[conflict:\${count}](bold red) ";
+        untracked = "[?\${count}](cyan) ";
+        modified = "[!\${count}](yellow) ";
+        staged = "[+\${count}](green) ";
+        renamed = "[»\${count}](purple) ";
+        deleted = "[✘\${count}](red) ";
+        stashed = "[stash:\${count}](blue) ";
+        ahead = "[↑\${count}](green) ";
+        behind = "[↓\${count}](red) ";
+        diverged = "[↑\${ahead_count}↓\${behind_count}](red) ";
+      };
+      nix_shell = {
+        symbol = "nix ";
+        format = "[$symbol$state]($style) ";
+      };
+      python.symbol = "py ";
+      nodejs.symbol = "node ";
+      rust.symbol = "rs ";
+      cmd_duration = {
+        min_time = 2000;
+        format = "[took $duration](dimmed white) ";
+      };
+      status = {
+        disabled = false;
+        format = "[exit $status](bold red) ";
+      };
+      character = {
+        success_symbol = "[❯](bold green)";
+        error_symbol = "[❯](bold red)";
+        vimcmd_symbol = "[❮](bold purple)";
+      };
+    };
+  };
 
-      set -l vcs (fish_vcs_prompt)
-      test -n "$vcs"; and echo -n " $vcs"
+  programs.fzf = {
+    enable = true;
+    enableFishIntegration = true;
+    defaultOptions = [
+      "--height=40%"
+      "--layout=reverse"
+      "--border"
+    ];
+  };
+  programs.zoxide = {
+    enable = true;
+    enableFishIntegration = true;
+  };
+  programs.lazygit.enable = true;
 
-      if test $last_status -ne 0
-        set_color red
-        echo -n " [$last_status]"
-        set_color normal
-      end
-
-      echo -n "> "
-    '';
+  programs.konsole = {
+    enable = desktop == "plasma";
+    defaultProfile = "Jason Nord";
+    profiles."Jason Nord" = {
+      colorScheme = "Jason Nord";
+      command = "${pkgs.fish}/bin/fish";
+      font = {
+        name = "JetBrainsMono Nerd Font";
+        size = 12;
+      };
+      extraConfig = {
+        General = {
+          TerminalColumns = 133;
+          TerminalRows = 31;
+        };
+        Scrolling = {
+          HistoryMode = 1;
+          HistorySize = 10000;
+        };
+      };
+    };
+    # Match the existing Ghostty palette.
+    customColorSchemes."Jason Nord" = {
+      General = {
+        Description = "Jason Nord";
+        Opacity = 0.94;
+        Blur = true;
+      };
+      Background.Color = "46,52,64";
+      BackgroundIntense.Color = "46,52,64";
+      Foreground.Color = "216,222,233";
+      ForegroundIntense.Color = "236,239,244";
+      Color0.Color = "59,66,82";
+      Color0Intense.Color = "76,86,106";
+      Color1.Color = "191,97,106";
+      Color1Intense.Color = "191,97,106";
+      Color2.Color = "163,190,140";
+      Color2Intense.Color = "163,190,140";
+      Color3.Color = "235,203,139";
+      Color3Intense.Color = "235,203,139";
+      Color4.Color = "129,161,193";
+      Color4Intense.Color = "129,161,193";
+      Color5.Color = "180,142,173";
+      Color5Intense.Color = "180,142,173";
+      Color6.Color = "136,192,208";
+      Color6Intense.Color = "143,188,187";
+      Color7.Color = "229,233,240";
+      Color7Intense.Color = "236,239,244";
+    };
   };
 
   xdg.configFile."alacritty/alacritty.toml".source = ./alacritty/alacritty.toml;

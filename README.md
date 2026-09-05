@@ -28,6 +28,37 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 - CI formats and lints the repository, checks documentation links, scans the full
   Git history for secrets, evaluates every host, and builds all five Intel desktop profiles.
 
+## Fish and terminals
+
+Fish uses a two-line Starship prompt in both Konsole and Ghostty. Konsole's
+`Jason Nord` profile matches Ghostty's Nord palette and 12-point JetBrains Mono
+Nerd Font. Configuration lives in `home/jason/home.nix`.
+
+The prompt shows the directory, Git branch, and status counts:
+
+| Indicator | Meaning |
+| --- | --- |
+| `?2` | Two untracked files |
+| `!2` | Two modified files with unstaged changes |
+| `+2` | Two staged files, still uncommitted |
+| `»2` / `✘2` | Renamed / deleted files |
+| `conflict:2` | Two conflicted files |
+| `stash:2` | Two stash entries |
+| `↑2` / `↓2` | Commits ahead of / behind the local upstream reference |
+
+A clean repository has no file-status indicators. Ahead/behind reflects the last
+fetch; the prompt never fetches automatically. Failed commands show their exit
+code and a red prompt arrow; commands taking at least two seconds show duration.
+Project runtimes and Nix shells appear when detected.
+
+- `Ctrl+R`: fuzzy history search; `Ctrl+T`: file picker; `Alt+C`: directory picker.
+- `z name`: jump to a frequently visited directory; `zi`: interactive selection.
+- Fish abbreviations: `gs` (status), `gd` (diff), `gds` (staged diff),
+  `gl` (recent commit graph), `lg` (Lazygit).
+
+After rebuilding, open a new terminal tab or run `exec fish` for the new prompt.
+New Konsole windows use the managed profile.
+
 ## Supported Profiles
 
 The unsuffixed laptop output uses Plasma. The other desktops append their name
