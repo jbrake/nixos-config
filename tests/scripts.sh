@@ -3,7 +3,8 @@
 set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-test_root="$(mktemp -d)"
+# Match production realpath checks even when the runner's TMPDIR is a symlink.
+test_root="$(realpath -e -- "$(mktemp -d)")"
 trap 'rm -rf -- "$test_root"' EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
