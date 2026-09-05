@@ -54,6 +54,7 @@ cp "$repo_root/scripts/install-host.sh" "$fixture/scripts/"
 hardware="$fixture/hosts/test-host/hardware-configuration.nix"
 printf 'original\n' >"$hardware"
 export TEST_CALL_LOG="$test_root/calls"
+export TEST_MOUNT_LOG="$test_root/mount-log"
 cat >"$stub_bin/installer-command" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -74,10 +75,10 @@ done
 reject_target() {
   local target="$1" message="$2"
   : >"$TEST_CALL_LOG"
-  if PATH="$stub_bin:$PATH" bash "$fixture/scripts/install-host.sh" test-host "$target" >"$test_root/output" 2>&1; then
+  if PATH="$stub_bin:$PATH" bash -x "$fixture/scripts/install-host.sh" test-host "$target" >"$test_root/output" 2>&1; then
     fail "Installer accepted $target"
   fi
-  grep -q "$message" "$test_root/output" || { cat "$test_root/output"; fail "Wrong rejection"; }
+  grep -q "$message" "$test_root/output" || { cat "$test_root/output"; cat "$TEST_MOUNT_LOG" 2>/dev/null || true; fail "Wrong rejection"; }
   [[ ! -s "$TEST_CALL_LOG" ]] || fail "Installer performed work before rejecting target"
   [[ "$(<"$hardware")" == original ]] || fail "Installer replaced hardware config"
 }
@@ -97,6 +98,8 @@ export TEST_MOUNT="$test_root/mounted"
 mkdir "$TEST_MOUNT"
 cat >"$stub_bin/findmnt" <<'EOF'
 #!/usr/bin/env bash
+exec 2>"$TEST_MOUNT_LOG"
+set -x
 [[ $# == 2 && "$1" == --mountpoint && "$2" == "$TEST_MOUNT" ]]
 EOF
 chmod +x "$stub_bin/findmnt"
