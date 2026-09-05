@@ -14,6 +14,7 @@
     # Temporary Linux package source for the official ChatGPT desktop preview.
     # Drop this input once NixOS/nixpkgs#551713 reaches nixos-26.05 and use
     # pkgs.chatgpt directly; that attribute is currently the macOS-only app.
+    # Fixed commit: change this URL deliberately; flake update cannot advance it.
     chatgpt-nixpkgs.url = "github:Moraxyc/nixpkgs/340fc2755c92977c6f56108b0c982f76dfd184c0";
 
     home-manager = {
@@ -30,6 +31,7 @@
     # RetroDECK is intentionally distributed as a Flatpak. This module keeps
     # that one external application declarative without treating every Flatpak
     # installed by hand as NixOS-owned state.
+    # Fixed release tag: select a new tag here when upgrading the module.
     nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
 
     plasma-manager = {
@@ -163,6 +165,7 @@
           inherit hostname desktop profile;
           extraModules = [
             ./modules/nixos/vm-guest.nix
+            { jbrake.spiceSessionWorkaround.enable = true; }
             desktopModule
           ];
         };
@@ -180,15 +183,11 @@
           hostname,
           hardwareModule,
           enableBackup ? false,
-          fingerprintResetMode ? "when-missing",
         }:
         let
           commonExtraModules = [
             hardwareModule
             ./modules/nixos/fingerprint.nix
-            {
-              jbrake.frameworkFingerprint.resetMode = fingerprintResetMode;
-            }
           ]
           ++ lib.optional enableBackup {
             jbrake.resticBackup = {
@@ -220,9 +219,6 @@
           hostname = "framework-amd-ai-300";
           hardwareModule = "${nixos-hardware}/framework/13-inch/amd-ai-300-series";
           enableBackup = true;
-          # This controller is dedicated to the Goodix reader on the AMD
-          # laptop, so resetting it immediately before use is safe.
-          fingerprintResetMode = "before-use";
         })
         // (mkFrameworkLaptopProfiles {
           hostname = "framework-intel-core-ultra";
@@ -266,6 +262,7 @@
       devShells.${system}.default = pkgs.mkShellNoCC {
         packages = with pkgs; [
           deadnix
+          fakeroot
           gitleaks
           lychee
           nix-update
@@ -276,16 +273,27 @@
 
       # Build every laptop desktop role on deployed Intel hardware in CI. Nix
       # also evaluates all retained AMD and VM configurations during flake checks.
-      checks.${system} = lib.mapAttrs' (
-        desktop: _:
-        let
-          profile =
-            if desktop == "plasma" then
-              "framework-intel-core-ultra"
-            else
-              "framework-intel-core-ultra-${desktop}";
-        in
-        lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
-      ) laptopDesktopModules;
+      checks.${system} =
+        lib.mapAttrs' (
+          desktop: _:
+          let
+            profile =
+              if desktop == "plasma" then
+                "framework-intel-core-ultra"
+              else
+                "framework-intel-core-ultra-${desktop}";
+          in
+          lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
+        ) laptopDesktopModules
+        // {
+          fingerprint-policies = import ./tests/fingerprint.nix {
+            configurations = self.nixosConfigurations;
+            inherit pkgs lib;
+          };
+          spice-workaround = import ./tests/spice.nix {
+            configurations = self.nixosConfigurations;
+            inherit pkgs lib;
+          };
+        };
     };
 }

@@ -154,18 +154,19 @@ let
   ];
 in
 {
-  options.jbrake.frameworkFingerprint.resetMode = lib.mkOption {
-    type = lib.types.enum [
-      "when-missing"
-      "always"
-      "before-use"
-    ];
-    default = "when-missing";
-    description = ''
-      Whether to reset the fingerprint reader's validated xHCI controller
-      only when missing after resume, after every resume, or before each
-      fprintd activation.
-    '';
+  options.jbrake.frameworkFingerprint = {
+    resetMode = lib.mkOption {
+      type = lib.types.enum [
+        "disabled"
+        "when-missing"
+        "always"
+        "before-use"
+      ];
+      default = "disabled";
+      description = "Controller recovery policy. Enable only after checking the host's USB topology.";
+    };
+    keepAwake = lib.mkEnableOption "disable runtime autosuspend for the Goodix reader";
+    stopBeforeSleep = lib.mkEnableOption "stop fprintd before sleep outside Plasma";
   };
 
   config = {
@@ -173,23 +174,27 @@ in
 
     # Framework's Goodix reader can be flaky after suspend when it is left in
     # runtime autosuspend. Keep only this internal fingerprint device awake.
-    services.udev.extraRules = lib.mkAfter ''
-      ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="609c", TEST=="power/control", ATTR{power/control}="on"
-    '';
+    services.udev.extraRules = lib.mkIf cfg.keepAwake (
+      lib.mkAfter ''
+        ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="27c6", ATTR{idProduct}=="609c", TEST=="power/control", ATTR{power/control}="on"
+      ''
+    );
 
     # Plasma keeps a dedicated fingerprint PAM worker alive while locked.
     # Stopping fprintd here would terminate that worker across suspend. Other
     # desktops retain the stop-before-sleep workaround.
-    powerManagement.powerDownCommands = lib.mkIf (!config.services.desktopManager.plasma6.enable) (
-      lib.mkAfter ''
-        ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
-      ''
-    );
+    powerManagement.powerDownCommands =
+      lib.mkIf (cfg.stopBeforeSleep && !config.services.desktopManager.plasma6.enable)
+        (
+          lib.mkAfter ''
+            ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
+          ''
+        );
 
     # Discover the controller at boot so recovery still knows the validated
     # target while the USB child device is missing. This is the declarative
     # equivalent of Framework's Fingerprint-Wake-Workaround installer.
-    systemd.services.framework-fingerprint-controller = {
+    systemd.services.framework-fingerprint-controller = lib.mkIf (cfg.resetMode != "disabled") {
       description = "Remember the Framework fingerprint reader USB controller";
       wantedBy = [ "multi-user.target" ];
       before = sleepTargets;
@@ -203,19 +208,25 @@ in
 
     # Conservative profiles recover after resume. Plasma asks D-Bus to start
     # fprintd as soon as the user session thaws, so order recovery first.
-    systemd.services.framework-fingerprint-wake = lib.mkIf (cfg.resetMode != "before-use") {
-      description = "Restore the Framework fingerprint reader after resume";
-      wantedBy = sleepTargets;
-      wants = [ "framework-fingerprint-controller.service" ];
-      after = sleepTargets ++ [ "framework-fingerprint-controller.service" ];
-      before = [ "fprintd.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RuntimeDirectory = "framework-fingerprint-wake";
-        RuntimeDirectoryPreserve = true;
-        ExecStart = "${fingerprintWake}/bin/framework-fingerprint-wake recover";
-      };
-    };
+    systemd.services.framework-fingerprint-wake =
+      lib.mkIf
+        (builtins.elem cfg.resetMode [
+          "when-missing"
+          "always"
+        ])
+        {
+          description = "Restore the Framework fingerprint reader after resume";
+          wantedBy = sleepTargets;
+          wants = [ "framework-fingerprint-controller.service" ];
+          after = sleepTargets ++ [ "framework-fingerprint-controller.service" ];
+          before = [ "fprintd.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RuntimeDirectory = "framework-fingerprint-wake";
+            RuntimeDirectoryPreserve = true;
+            ExecStart = "${fingerprintWake}/bin/framework-fingerprint-wake recover";
+          };
+        };
 
     # On the verified AMD topology the xHCI controller is dedicated to the
     # reader. Reset it immediately before fprintd opens the device, mitigating
@@ -229,13 +240,9 @@ in
       ];
     };
 
-    # Fingerprint auth is deliberately SUDO-ONLY. This mirrors the setup that
-    # took real effort to get right on CachyOS (2026-04): PAM modules run
-    # sequentially, so pam_fprintd in an interactive login stack makes the
-    # password prompt block for 30+ seconds while fprintd waits for a scan.
-    #
-    # NixOS defaults <service>.fprintAuth = services.fprintd.enable for EVERY
-    # PAM service, so everything except sudo must be switched off explicitly.
+    # Keep sudo and Plasma's parallel lock-screen worker enabled. Disable
+    # fingerprint authentication in the sequential password stacks below so
+    # they do not wait for a scan before accepting a password.
     #
     # Plasma runs the separate "kde-fingerprint" PAM service in parallel with
     # the password prompt. Keep that worker alive for the lifetime of the lock

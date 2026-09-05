@@ -16,9 +16,9 @@ if [[ -z "$default_profile" ]]; then
 fi
 
 profile="${1:-$default_profile}"
-flake_ref="path:$repo_root#$profile"
+flake_ref="$repo_root#$profile"
 
-if ! host="$(nix eval --raw "path:$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
+if ! host="$(nix eval --raw "$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
   echo "Unknown NixOS profile: $profile" >&2
   echo "Run 'nix flake show' to list available profiles." >&2
   exit 1

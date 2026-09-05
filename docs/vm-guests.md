@@ -64,3 +64,21 @@ variables may reach the user systemd manager just after login.
 VMs share the common base, containers, and Home Manager profile. They do not
 inherit laptop-only firmware services, Bluetooth, Tailscale, Flatpak, libvirt,
 or virt-manager.
+
+## Retesting the SPICE workaround
+
+Use a disposable guest or snapshot. Record the desktop, Nixpkgs revision, and
+GNOME/SPICE versions before testing. In the test guest's `configuration.nix`,
+set `jbrake.spiceSessionWorkaround.enable = lib.mkForce false` (add `lib` to the
+module arguments). This disables the custom session service and its paired
+XDG autostart mask together, while keeping the normal SPICE daemon enabled.
+The retained VM profiles explicitly enable this workaround in `mkVmHost`;
+the module defaults to disabled for other users.
+
+Rebuild and reboot the guest, then test clipboard sharing in both directions
+and window-driven display resizing. Repeat across logout/login, lock/unlock,
+and a second reboot. Check `pgrep -a spice-vdagent` and the system/user journals
+for missing agents, competing greeter agents, or repeated restarts. If upstream
+startup works consistently on the retained guest desktops, retire both custom
+pieces together; otherwise restore them and record the failing versions and
+steps. This trial has not yet been performed.

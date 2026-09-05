@@ -26,7 +26,7 @@ role-based modules, and CI to keep the deployed configuration reproducible.
 - Encrypted Restic backups provide home-directory history and fresh-install
   recovery independently of the local desktop capsules.
 - CI formats and lints the repository, checks documentation links, scans the full
-  Git history for secrets, evaluates every host, and builds all AMD profiles.
+  Git history for secrets, evaluates every host, and builds all five Intel desktop profiles.
 
 ## Supported Profiles
 
@@ -180,10 +180,10 @@ for the real `jason` password, and clones only Git-managed repository content
 to `/home/jason/Documents/repos/nixos-config` on the target system. It is not a
 generic installer and refuses to overwrite an existing target checkout.
 
-The Intel configurations remain evaluation-safe for CI, but install, rebuild,
-and update scripts refuse to deploy them while the hardware file contains the
-`INTEL_HARDWARE_PLACEHOLDER` marker. Generating the real hardware configuration
-removes that guard.
+The committed Intel hardware file is now provisioned. Rebuild and update
+scripts retain a guard against the historical `INTEL_HARDWARE_PLACEHOLDER`
+marker. The installer generates hardware configuration only after validating
+the target mount point and checking for an existing target checkout.
 
 ## Owner First Boot
 
@@ -229,6 +229,11 @@ Apply the active host and desktop configuration:
 ./scripts/rebuild.sh
 ```
 
+Deployment scripts use Git-aware flake references, matching CI. Edits to tracked
+files are included before committing; add new configuration files with `git add`
+before rebuilding. Ignored files, including local VM disks and assistant state,
+are excluded from the flake source.
+
 Switch desktops while preserving separate state for each one:
 
 ```bash
@@ -250,7 +255,34 @@ Update inputs, prove the new system builds, and switch only after success:
 ```
 
 The update script restores the exact previous `flake.lock` if updating or
-building fails.
+building fails. It updates branch-tracking flake inputs, including the AI CLI
+inputs, and keeps local package versions unchanged. Once the build succeeds,
+the new lock file is retained even if system activation fails, so the failed
+activation can be inspected and retried.
+
+Update the locally packaged TONE3000 independently:
+
+```bash
+./scripts/update-tone3000.sh
+```
+
+This updates its version/hash and builds it against the current flake inputs.
+It restores the previous package expression if updating or building fails and
+does not activate a system. Review `git diff`, then run `./scripts/rebuild.sh`
+to install the result. A failure checking TONE3000 releases no longer blocks
+the normal system-update command.
+
+Some versions require a deliberate edit rather than just `nix flake update`:
+
+| Source | How to advance it |
+| --- | --- |
+| `chatgpt-nixpkgs` | Select a reviewed commit in its `flake.nix` URL, then run `nix flake update chatgpt-nixpkgs`. Remove this temporary input when the Linux package is available on the stable branch. |
+| `nix-flatpak` | Select a release tag in its `flake.nix` URL, then run `nix flake update nix-flatpak`. This updates the integration module; Flatpak apps update separately on their weekly schedule. |
+| NixOS and Home Manager release branches | Change both branch URLs together for a release upgrade; leave `system.stateVersion` and `home.stateVersion` unchanged. |
+| TONE3000 version and source hash | Run `./scripts/update-tone3000.sh`. |
+
+After editing a fixed pin, build the active profile before applying it. Use
+`./scripts/rebuild.sh` to apply without advancing unrelated flake inputs.
 
 Run a backup now or inspect snapshots:
 

@@ -149,7 +149,7 @@ if [[ "$backup" == true ]]; then
 fi
 
 echo "Building $target_profile for the next boot..."
-nixos-rebuild boot --flake "path:$repo_root#$target_profile"
+nixos-rebuild boot --flake "$repo_root#$target_profile"
 
 echo
 echo "$target is ready for the next boot."

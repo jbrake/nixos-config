@@ -1,10 +1,9 @@
 { pkgs, ... }:
 
 {
-  # Touchpad, panel, theme, and other desktop look-and-feel are set by hand
-  # in System Settings (see README "First login"). KWin on Wayland keeps them
-  # in its own config files; NixOS has no native options for them and this
-  # repo stays out of that business on purpose.
+  # Home Manager declares selected theme/touchpad settings in home/jason/home.nix;
+  # the AMD host also supplies touchpad defaults. Other preferences remain
+  # editable in System Settings and are saved by the desktop-state capsules.
 
   services.displayManager.sddm = {
     enable = true;

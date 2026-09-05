@@ -13,12 +13,22 @@
 
 ## Framework Laptop 13 Pro — Intel Core Ultra Series 3
 
-This host is planned but not yet provisioned. Its committed hardware file is an
-evaluation-only placeholder. `scripts/install-host.sh` will generate and store
-the real hardware configuration before the first installation.
+This is the deployed laptop. Its committed hardware file contains the installed
+filesystem UUIDs; regenerate it when reinstalling onto a newly formatted disk.
+The AMD configuration is retained for reference and is no longer deployed.
+Both hardware configurations expose Plasma, GNOME, Cinnamon, COSMIC, and
+Hyprland profiles with the shared workstation and Restic configuration.
 
-It is the replacement for the AMD laptop and exposes the same Plasma, GNOME,
-Cinnamon, COSMIC, and Hyprland profiles. All use the shared workstation
-configuration and encrypted Restic repository. The Intel laptop receives a new
-NAS SSH key; after its first verified backup, the AMD laptop can be erased for
-sale.
+## Workaround review record
+
+| Workaround | Scope and reason | Retest trigger / removal criterion |
+| --- | --- | --- |
+| Fingerprint recovery | Explicit settings in each laptop host; missing or unresponsive Goodix reader after idle/resume | Follow [the fingerprint retirement test](fingerprint.md#recovery-switches-and-retirement-test) after kernel or firmware changes. |
+| Intel Wi-Fi power saving disabled | Intel host only; previously observed BE211/iwlmld beacon loss | After kernel/wireless-firmware updates, temporarily remove `networking.networkmanager.wifi.powersave = false`, rebuild and reboot, then compare connectivity on the same AP during idle and repeated suspend/resume. Retire the override if the failure no longer reproduces over normal use. |
+| SPICE session agent service and autostart mask | VM guests only; session-agent startup failure and duplicate-agent races | After GNOME/SPICE/NixOS module updates, follow [the VM retest procedure](vm-guests.md#retesting-the-spice-workaround). Remove the pair together if upstream session startup works reliably. |
+
+The original failing version combinations for Wi-Fi and SPICE were not recorded.
+For each trial, record the date, host/guest and desktop, Nixpkgs revision, kernel,
+relevant firmware/package versions, reproduction steps, and result before
+removing a workaround. These are local observations, not claims that all newer
+versions need the same fixes. None was retired during the 2026-09-05 cleanup.

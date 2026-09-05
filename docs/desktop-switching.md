@@ -218,9 +218,18 @@ desktop state. Use `Ctrl-Alt-F3`, log in, and inspect:
 journalctl -u desktop-state-activate.service -b
 ```
 
-Booting the previous NixOS generation is safe. An interrupted transition is
-either completed for the target generation or restored back to the source
-desktop from its saved capsule.
+On an interrupted transition, booting its target retries the saved destination;
+booting its source restores the saved source capsule. If restoration already
+published its current marker, the next boot clears the completed journal and
+then honors the selected desktop. An unrelated third desktop is rejected while
+the journal remains unresolved.
+
+CI exercises copy failures during save/restore, interruption immediately after
+publishing the current marker, retrying the target, and returning to the source.
+It checks capsule contents, home ownership/permissions, and shared personal
+files using temporary homes under fakeroot. These tests cover process failures;
+they do not establish filesystem durability after sudden power loss or replace
+the encrypted Restic backup.
 
 ## Clean Recovery or Reinstallation
 

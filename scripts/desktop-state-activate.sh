@@ -245,7 +245,15 @@ restore_state() {
   local desktop="$1"
   local capsule="$state_root/$desktop"
   if [[ -d "$capsule" ]]; then
-    cp -a -- "$capsule/." "$home/"
+    # Copy the entries, not the root-owned capsule directory itself: cp -a
+    # capsule/. home/ also replaces home's ownership and permissions.
+    (
+      shopt -s dotglob nullglob
+      entries=("$capsule"/*)
+      if [[ ${#entries[@]} -gt 0 ]]; then
+        cp -a -- "${entries[@]}" "$home/"
+      fi
+    )
     echo "Restored saved $desktop desktop state"
   else
     echo "No saved $desktop state exists; starting it clean"
@@ -274,16 +282,18 @@ finish_transition() {
 if [[ -f "$pending" ]]; then
   read -r pending_from pending_to <"$pending"
   if [[ "$current" == "$pending_to" ]]; then
+    # The restore completed before interruption. Clear its journal, then
+    # honor this boot's target below (which may be the previous desktop).
     rm -f -- "$pending"
   elif [[ "$target" == "$pending_to" || "$target" == "$pending_from" ]]; then
     # Complete an interrupted transition, or restore the source capsule when
     # booting back into the source generation from the NixOS boot menu.
     finish_transition "$target"
+    exit 0
   else
     echo "Cannot reconcile pending transition $pending_from -> $pending_to with target $target" >&2
     exit 1
   fi
-  exit 0
 fi
 
 if [[ "$current" == "$target" ]]; then

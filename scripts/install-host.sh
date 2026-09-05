@@ -30,11 +30,30 @@ fi
 
 profile="$1"
 target_root="${2:-/mnt}"
-target_repo="$target_root/home/$target_user/Documents/repos/nixos-config"
-flake_ref="path:$repo_root#$profile"
+flake_ref="$repo_root#$profile"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run this from the NixOS installer as root." >&2
+  exit 1
+fi
+
+# Validate before evaluating the flake, replacing hardware config, or installing.
+if [[ "$target_root" != /* ]] || ! target_root="$(realpath -e -- "$target_root")"; then
+  echo "Target root must be an existing absolute directory." >&2
+  exit 1
+fi
+if [[ ! -d "$target_root" || "$target_root" -ef / || "$repo_root" == "$target_root" || "$repo_root" == "$target_root/"* ]]; then
+  echo "Refusing unsafe installation root: $target_root" >&2
+  exit 1
+fi
+if ! findmnt --mountpoint "$target_root" >/dev/null 2>&1; then
+  echo "$target_root is not a mount point. Mount your target root filesystem first." >&2
+  exit 1
+fi
+
+target_repo="$target_root/home/$target_user/Documents/repos/nixos-config"
+if [[ -e "$target_repo" || -L "$target_repo" ]]; then
+  echo "Refusing to overwrite existing target: $target_repo" >&2
   exit 1
 fi
 
@@ -58,7 +77,7 @@ if ! command -v nixos-enter >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! host="$(nix --extra-experimental-features "nix-command flakes" eval --raw "path:$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
+if ! host="$(nix --extra-experimental-features "nix-command flakes" eval --raw "$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
   echo "Unknown NixOS profile: $profile" >&2
   echo "Run 'nix flake show' to list available profiles." >&2
   exit 1
@@ -66,16 +85,11 @@ fi
 
 hardware_file="$repo_root/hosts/$host/hardware-configuration.nix"
 
-if ! findmnt --target "$target_root" >/dev/null 2>&1; then
-  echo "$target_root is not a mount point. Mount your target root filesystem first." >&2
-  exit 1
-fi
-
 echo "Generating hardware configuration for $host from $target_root"
 nixos-generate-config --root "$target_root" --show-hardware-config > "$hardware_file"
 
 echo "Locking flake inputs"
-nix --extra-experimental-features "nix-command flakes" flake lock --flake "path:$repo_root"
+nix --extra-experimental-features "nix-command flakes" flake lock --flake "$repo_root"
 
 echo "Installing NixOS flake: $flake_ref"
 nixos-install --root "$target_root" --flake "$flake_ref" --no-root-passwd
@@ -86,7 +100,7 @@ nixos-enter --root "$target_root" -c "passwd $target_user"
 echo "Copying generated repo to $target_repo"
 install -d -m 755 -o 1000 -g 100 "$(dirname -- "$target_repo")"
 
-if [[ -e "$target_repo" ]]; then
+if [[ -e "$target_repo" || -L "$target_repo" ]]; then
   echo "Refusing to overwrite existing target: $target_repo" >&2
   exit 1
 fi

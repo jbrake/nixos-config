@@ -10,7 +10,14 @@ echo "Checking Nix formatting"
 nix fmt -- --ci
 
 echo "Running ShellCheck"
-shellcheck scripts/*.sh
+shellcheck scripts/*.sh tests/*.sh
+
+echo "Testing desktop restoration and installer preflight"
+fakeroot -- bash tests/scripts.sh
+fakeroot -- bash tests/desktop-recovery.sh
+
+echo "Testing independent update transactions"
+bash tests/updates.sh
 
 echo "Running Statix"
 statix check .

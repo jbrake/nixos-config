@@ -16,9 +16,9 @@ if [[ -z "$default_profile" ]]; then
 fi
 
 profile="${1:-$default_profile}"
-flake_ref="path:$repo_root#$profile"
+flake_ref="$repo_root#$profile"
 
-if ! host="$(nix eval --raw "path:$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
+if ! host="$(nix eval --raw "$repo_root#nixosConfigurations.\"$profile\".config.networking.hostName" 2>/dev/null)"; then
   echo "Unknown NixOS profile: $profile" >&2
   echo "Run 'nix flake show' to list available profiles." >&2
   exit 1
@@ -39,19 +39,16 @@ fi
 cd "$repo_root"
 
 lock_backup="$(mktemp)"
-tone3000_backup="$(mktemp)"
 cp --preserve=mode,timestamps flake.lock "$lock_backup"
-cp --preserve=mode,timestamps packages/tone3000.nix "$tone3000_backup"
 restore_updates=true
 
 cleanup() {
   status=$?
   if [[ "$restore_updates" == true && $status -ne 0 ]]; then
-    echo "Update failed — restoring the previous inputs and packages." >&2
+    echo "Update failed — restoring the previous flake.lock." >&2
     cp "$lock_backup" flake.lock
-    cp "$tone3000_backup" packages/tone3000.nix
   fi
-  rm -f "$lock_backup" "$tone3000_backup"
+  rm -f "$lock_backup"
   trap - EXIT
   exit "$status"
 }
@@ -60,18 +57,12 @@ trap cleanup EXIT
 echo "Running: nix flake update"
 nix flake update
 
-echo "Checking TONE3000 for a new GitHub release..."
-nix develop --command nix-update tone3000 \
-  --flake \
-  --url https://github.com/tone-3000/tone3000-plugin \
-  --override-filename packages/tone3000.nix
-
-# A bad update must not strand the lock file or package expression: prove the
-# system builds before switching, and restore both if it does not.
+# Local package versions are updated separately by update-tone3000.sh.
+# Prove the system builds before switching; restore the lock file on failure.
 echo "Verifying the updated inputs build..."
-if ! nix build "path:$repo_root#nixosConfigurations.\"$profile\".config.system.build.toplevel" --no-link; then
+if ! nix build "$repo_root#nixosConfigurations.\"$profile\".config.system.build.toplevel" --no-link; then
   echo "Build failed with updated inputs." >&2
-  echo "Retry the update in a few days; the fix has to land upstream." >&2
+  echo "Inspect the build error above; the previous flake.lock will be restored." >&2
   exit 1
 fi
 

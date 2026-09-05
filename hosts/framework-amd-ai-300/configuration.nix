@@ -3,6 +3,14 @@
 {
   imports = [ ./hardware-configuration.nix ];
 
+  # Existing recovery policy; retest after firmware/kernel updates using
+  # docs/fingerprint.md. New hosts do not inherit controller resets by default.
+  jbrake.frameworkFingerprint = {
+    resetMode = "before-use";
+    keepAwake = true;
+    stopBeforeSleep = true;
+  };
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
