@@ -5,13 +5,19 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # Match production realpath checks even when the runner's TMPDIR is a symlink.
 test_root="$(realpath -e -- "$(mktemp -d)")"
 trap 'rm -rf -- "$test_root"' EXIT
+
+# Avoid Ubuntu's /usr/bin/env under Nix fakeroot's LD_PRELOAD. Generated
+# commands must use the same Nix Bash/libc as the process running the tests.
+write_stub() {
+  printf '#!%s\n' "$(command -v bash)"
+  cat
+}
 export REAL_CP REAL_MV
 REAL_CP="$(command -v cp)"
 REAL_MV="$(command -v mv)"
 stub_bin="$test_root/bin"
 mkdir "$stub_bin"
-cat >"$stub_bin/cp" <<'STUB'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/cp" <<'STUB'
 set -euo pipefail
 last="${!#}"
 if [[ ! -e "$TEST_FAILED" ]]; then
@@ -28,8 +34,7 @@ if [[ ! -e "$TEST_FAILED" ]]; then
 fi
 exec "$REAL_CP" "$@"
 STUB
-cat >"$stub_bin/mv" <<'STUB'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/mv" <<'STUB'
 set -euo pipefail
 if [[ "$TEST_FAILURE" == marker && "${!#}" == "$TEST_HOME/.local/state/desktop-profiles/current" && ! -e "$TEST_FAILED" ]]; then
   "$REAL_MV" "$@"

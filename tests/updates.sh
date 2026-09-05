@@ -5,6 +5,13 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 # Match production realpath checks even when the runner's TMPDIR is a symlink.
 test_root="$(realpath -e -- "$(mktemp -d)")"
 trap 'rm -rf -- "$test_root"' EXIT
+
+# Avoid Ubuntu's /usr/bin/env under Nix fakeroot's LD_PRELOAD. Generated
+# commands must use the same Nix Bash/libc as the process running the tests.
+write_stub() {
+  printf '#!%s\n' "$(command -v bash)"
+  cat
+}
 fixture="$test_root/repo"
 stub_bin="$test_root/bin"
 mkdir -p "$fixture/scripts" "$fixture/packages" "$fixture/hosts/test-host" "$stub_bin"
@@ -12,8 +19,7 @@ cp "$repo_root/scripts/"{update-system,update-tone3000,desktop-profile-guard}.sh
 touch "$fixture/hosts/test-host/hardware-configuration.nix"
 export TEST_CALL_LOG="$test_root/calls"
 
-cat >"$stub_bin/nix" <<'EOF'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/nix" <<'EOF'
 set -euo pipefail
 printf '%s\n' "nix $*" >>"$TEST_CALL_LOG"
 case "$1" in
@@ -32,13 +38,11 @@ case "$1" in
   *) exit 99 ;;
 esac
 EOF
-cat >"$stub_bin/sudo" <<'EOF'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/sudo" <<'EOF'
 printf '%s\n' "sudo $*" >>"$TEST_CALL_LOG"
 [[ "$TEST_FAIL_STAGE" != activation ]]
 EOF
-cat >"$stub_bin/hostname" <<'EOF'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/hostname" <<'EOF'
 printf 'test-host\n'
 EOF
 chmod +x "$stub_bin/"*

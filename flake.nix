@@ -268,6 +268,8 @@
           nix-update
           shellcheck
           statix
+          # Tests run under Nix fakeroot; use its libc-compatible findmnt too.
+          util-linux
         ];
       };
 

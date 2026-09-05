@@ -7,6 +7,13 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 test_root="$(realpath -e -- "$(mktemp -d)")"
 trap 'rm -rf -- "$test_root"' EXIT
 
+# Avoid Ubuntu's /usr/bin/env under Nix fakeroot's LD_PRELOAD. Generated
+# commands must use the same Nix Bash/libc as the process running the tests.
+write_stub() {
+  printf '#!%s\n' "$(command -v bash)"
+  cat
+}
+
 fail() { echo "FAIL: $*" >&2; exit 1; }
 [[ "$(id -u)" == 0 ]] || fail "Run with fakeroot -- bash tests/scripts.sh"
 
@@ -55,8 +62,7 @@ hardware="$fixture/hosts/test-host/hardware-configuration.nix"
 printf 'original\n' >"$hardware"
 export TEST_CALL_LOG="$test_root/calls"
 export TEST_MOUNT_LOG="$test_root/mount-log"
-cat >"$stub_bin/installer-command" <<'EOF'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/installer-command" <<'EOF'
 set -euo pipefail
 name="${0##*/}"
 printf '%s\n' "$name" >>"$TEST_CALL_LOG"
@@ -96,8 +102,7 @@ reject_target "$test_root/missing" 'existing absolute directory'
 # branches without needing CAP_SYS_ADMIN or mounting a host disk.
 export TEST_MOUNT="$test_root/mounted"
 mkdir "$TEST_MOUNT"
-cat >"$stub_bin/findmnt" <<'EOF'
-#!/usr/bin/env bash
+write_stub >"$stub_bin/findmnt" <<'EOF'
 exec 2>"$TEST_MOUNT_LOG"
 set -x
 [[ $# == 2 && "$1" == --mountpoint && "$2" == "$TEST_MOUNT" ]]
