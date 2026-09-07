@@ -85,6 +85,8 @@ Disposable VM profiles remain independent:
 | `vm-cosmic` | COSMIC guest | Available |
 | `vm-hyprland` | Hyprland guest | Available |
 | `vm-cinnamon` | Cinnamon guest | Available |
+| `framework-intel-core-ultra-nixarchy` | Nixarchy laptop trial | Experimental; separate upstream package pins |
+| `vm-nixarchy` | Nixarchy / Omarchy guest | Experimental; see [VM trial](docs/vm-guests.md#nixarchy-trial) |
 
 ## Architecture
 

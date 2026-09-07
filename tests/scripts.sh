@@ -50,6 +50,35 @@ activate gnome
 mkdir -m 700 "$test_home/.local/state/desktop-profiles/cosmic"
 activate cosmic
 activate cosmic
+# Nixarchy must get writable, independent Hyprland and terminal state. Restoring
+# Plasma must preserve Home Manager symlinks, and switching back must keep themes.
+activate plasma
+mkdir -p "$test_home/.config/hypr/scheme" "$test_home/.config/ghostty"
+printf 'plasma-terminal\n' >"$test_root/terminal-config"
+ln -s "$test_root/terminal-config" "$test_home/.config/ghostty/config"
+printf 'existing-hyprland\n' >"$test_home/.config/hypr/hyprland.lua"
+activate nixarchy
+[[ ! -e "$test_home/.config/ghostty/config" ]] || fail "Plasma terminal leaked into Nixarchy"
+[[ ! -e "$test_home/.config/hypr" ]] || fail "Existing Hyprland state leaked into Nixarchy"
+mkdir -p "$test_home/.config/ghostty" "$test_home/.config/hypr" "$test_home/.local/state/omarchy"
+printf 'nixarchy-terminal\n' >"$test_home/.config/ghostty/config"
+printf 'nixarchy-hyprland\n' >"$test_home/.config/hypr/hyprland.lua"
+printf 'theme\n' >"$test_home/.local/state/omarchy/theme"
+activate plasma
+[[ "$(readlink "$test_home/.config/ghostty/config")" == "$test_root/terminal-config" ]] || fail "Terminal symlink was not restored"
+[[ "$(<"$test_home/.config/hypr/hyprland.lua")" == existing-hyprland ]] || fail "Hyprland config was not restored"
+[[ ! -e "$test_home/.local/state/omarchy" ]] || fail "Nixarchy state leaked into Plasma"
+activate nixarchy
+[[ "$(<"$test_home/.config/ghostty/config")" == nixarchy-terminal ]] || fail "Nixarchy terminal was not restored"
+[[ "$(<"$test_home/.local/state/omarchy/theme")" == theme ]] || fail "Nixarchy theme was not restored"
+
+# Both profiles remain subject to the existing prohibition on live desktop swaps.
+source "$repo_root/scripts/desktop-profile-guard.sh"
+[[ "$(framework_desktop_for_profile framework-intel-core-ultra-nixarchy framework-intel-core-ultra)" == nixarchy ]] || fail "Nixarchy profile not recognized"
+if (guard_framework_live_desktop framework-intel-core-ultra framework-intel-core-ultra-nixarchy framework-intel-core-ultra framework-intel-core-ultra switch-desktop.sh) >"$test_root/guard-output" 2>&1; then
+  fail "Live Plasma to Nixarchy change was accepted"
+fi
+
 echo "Desktop state round trips and home metadata passed"
 
 # Run the actual installer in a disposable checkout. Every command capable of

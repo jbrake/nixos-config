@@ -2,7 +2,7 @@
   description = "Jason's NixOS laptop configurations";
 
   inputs = {
-    # Keep the complete system on the current stable release. Individual hosts
+    # Keep laptop systems on the current stable release. Individual hosts
     # can still select linuxPackages_latest for recently released hardware.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -47,6 +47,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Omarchy desktop with its upstream package pins, isolated from stable profiles.
+    nixarchy.url = "github:olafkfreund/nixarchy/ffc74293d3b31087c802d4e3b7d58f2a933834f1";
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # AI CLIs come from dedicated, independently pinned flakes because they
@@ -79,12 +82,14 @@
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
+          nixpkgsInput ? nixpkgs,
+          homeManagerInput ? home-manager,
           # Per-host modules: nixos-hardware profile, fingerprint reader,
           # and the desktop choice (one reusable profile per laptop desktop,
           # one desktop per VM guest).
           extraModules ? [ ],
         }:
-        nixpkgs.lib.nixosSystem {
+        nixpkgsInput.lib.nixosSystem {
           inherit system;
           specialArgs = {
             inherit
@@ -102,7 +107,7 @@
             ./modules/nixos/containers.nix
             ./hosts/${hostname}/configuration.nix
             inputs.nix-index-database.nixosModules.default
-            home-manager.nixosModules.home-manager
+            homeManagerInput.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
@@ -128,6 +133,8 @@
           profile ? hostname,
           username ? "jason",
           homeModule ? ./home/jason/home.nix,
+          nixpkgsInput ? nixpkgs,
+          homeManagerInput ? home-manager,
           extraModules ? [ ],
         }:
         mkHost {
@@ -137,6 +144,8 @@
             profile
             username
             homeModule
+            nixpkgsInput
+            homeManagerInput
             ;
           extraModules = [
             ./modules/nixos/laptop.nix
@@ -160,9 +169,17 @@
           desktop,
           desktopModule,
           profile ? hostname,
+          nixpkgsInput ? nixpkgs,
+          homeManagerInput ? home-manager,
         }:
         mkHost {
-          inherit hostname desktop profile;
+          inherit
+            hostname
+            desktop
+            profile
+            nixpkgsInput
+            homeManagerInput
+            ;
           extraModules = [
             ./modules/nixos/vm-guest.nix
             { jbrake.spiceSessionWorkaround.enable = true; }
@@ -183,6 +200,7 @@
           hostname,
           hardwareModule,
           enableBackup ? false,
+          enableNixarchy ? false,
         }:
         let
           commonExtraModules = [
@@ -197,7 +215,7 @@
             };
           };
         in
-        lib.mapAttrs' (
+        (lib.mapAttrs' (
           desktop: desktopModule:
           let
             profile = if desktop == "plasma" then hostname else "${hostname}-${desktop}";
@@ -211,7 +229,18 @@
               ;
             extraModules = commonExtraModules;
           })
-        ) laptopDesktopModules;
+        ) laptopDesktopModules)
+        // lib.optionalAttrs enableNixarchy {
+          "${hostname}-nixarchy" = mkLaptopHost {
+            inherit hostname;
+            profile = "${hostname}-nixarchy";
+            desktop = "nixarchy";
+            desktopModule = ./modules/nixos/desktop-nixarchy-laptop.nix;
+            nixpkgsInput = inputs.nixarchy.inputs.nixpkgs;
+            homeManagerInput = inputs.nixarchy.inputs.home-manager;
+            extraModules = commonExtraModules;
+          };
+        };
     in
     {
       nixosConfigurations =
@@ -224,6 +253,7 @@
           hostname = "framework-intel-core-ultra";
           hardwareModule = "${nixos-hardware}/framework/13-inch/intel-core-ultra-series3";
           enableBackup = true;
+          enableNixarchy = true;
         })
         // {
           # The GNOME guest keeps its historical name: the installed VM's
@@ -244,6 +274,14 @@
             hostname = "vm-hyprland";
             desktop = "hyprland";
             desktopModule = ./modules/nixos/desktop-hyprland.nix;
+          };
+
+          vm-nixarchy = mkVmHost {
+            hostname = "vm-nixarchy";
+            desktop = "nixarchy";
+            nixpkgsInput = inputs.nixarchy.inputs.nixpkgs;
+            homeManagerInput = inputs.nixarchy.inputs.home-manager;
+            desktopModule = ./modules/nixos/desktop-nixarchy.nix;
           };
 
           vm-cinnamon = mkVmHost {
@@ -288,6 +326,8 @@
           lib.nameValuePair profile self.nixosConfigurations.${profile}.config.system.build.toplevel
         ) laptopDesktopModules
         // {
+          framework-intel-core-ultra-nixarchy =
+            self.nixosConfigurations.framework-intel-core-ultra-nixarchy.config.system.build.toplevel;
           fingerprint-policies = import ./tests/fingerprint.nix {
             configurations = self.nixosConfigurations;
             inherit pkgs lib;

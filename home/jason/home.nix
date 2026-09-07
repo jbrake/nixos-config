@@ -49,6 +49,10 @@ in
   imports = [
     inputs.plasma-manager.homeModules.plasma-manager
   ]
+  ++ lib.optionals (desktop == "nixarchy") [
+    inputs.nixarchy.homeManagerModules.nixarchy
+    { programs.nixarchy.enable = true; }
+  ]
   ++ lib.optionals isLaptopHyprland [
     inputs.caelestia-shell.homeManagerModules.default
     ./hyprland.nix
@@ -297,8 +301,12 @@ in
     };
   };
 
-  xdg.configFile."alacritty/alacritty.toml".source = ./alacritty/alacritty.toml;
-  xdg.configFile."ghostty/config".source = ./ghostty/config;
+  xdg.configFile."alacritty/alacritty.toml" = lib.mkIf (desktop != "nixarchy") {
+    source = ./alacritty/alacritty.toml;
+  };
+  xdg.configFile."ghostty/config" = lib.mkIf (desktop != "nixarchy") {
+    source = ./ghostty/config;
+  };
   xdg.configFile."ghostty/themes/jason-nord".source = ./ghostty/themes/jason-nord;
 
   # The upstream installer writes factory presets into the user's config

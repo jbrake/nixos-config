@@ -10,6 +10,7 @@ qemu-vm       GNOME
 vm-cosmic     COSMIC
 vm-hyprland   Hyprland
 vm-cinnamon   Cinnamon
+vm-nixarchy   Nixarchy (Omarchy desktop; experimental)
 ```
 
 ## Create a Guest
@@ -82,3 +83,32 @@ for missing agents, competing greeter agents, or repeated restarts. If upstream
 startup works consistently on the retained guest desktops, retire both custom
 pieces together; otherwise restore them and record the failing versions and
 steps. This trial has not yet been performed.
+
+## Nixarchy trial
+
+Nixarchy has its own pinned nixpkgs and Home Manager inputs because its desktop
+requires packages missing from NixOS 26.05. All other profiles retain their
+existing stable inputs. The trial reuses our base, Podman and guest configuration.
+
+Build and launch from this repository (no ISO installation needed):
+
+```bash
+nix build .#nixosConfigurations.vm-nixarchy.config.system.build.vm -o result-nixarchy-vm
+./result-nixarchy-vm/bin/run-vm-nixarchy-vm
+```
+
+The runner uses 8 GiB RAM, four virtual CPUs, and a separate 32 GiB sparse disk
+named `vm-nixarchy-trial.qcow2` in the working directory. It logs in as `jason`;
+the trial password is `nixarchy`. These login settings apply only to the generated
+VM runner. Existing VM images are not reused.
+
+`Super + Space` opens the menu; `Super + K` lists shortcuts. Terminal settings
+are seeded by Nixarchy so its theme switching can update them. Rendering uses
+software for portability, so animation performance is not representative of
+running on the laptop GPU.
+
+This runner is for trying the desktop. The guest does not contain a writable
+checkout of this repository; menu-driven system rebuilds require installing the
+guest and setting up that checkout first. Rebuild and relaunch the runner to
+try configuration changes. Closing the QEMU window stops the trial and keeps
+its disk for the next launch.

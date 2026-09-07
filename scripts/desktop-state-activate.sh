@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target="${1:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland> <home> [owner] [group]}"
-home="${2:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland> <home> [owner] [group]}"
+target="${1:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland|nixarchy> <home> [owner] [group]}"
+home="${2:?usage: desktop-state-activate.sh <plasma|gnome|cinnamon|cosmic|hyprland|nixarchy> <home> [owner] [group]}"
 owner="${3:-jason}"
 group="${4:-users}"
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic | hyprland) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland | nixarchy) ;;
   *)
     echo "Unsupported desktop state target: $target" >&2
     exit 1
@@ -72,7 +72,7 @@ fi
 
 current="$(<"$marker")"
 case "$current" in
-  plasma | gnome | cinnamon | cosmic | hyprland) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland | nixarchy) ;;
   *)
     echo "Invalid desktop state marker: $current" >&2
     exit 1
@@ -129,7 +129,21 @@ collect_paths() {
     ".config/gtk-3.0" \
     ".config/gtk-4.0" \
     ".config/caelestia/shell-tokens.json" \
-    ".config/hypr/scheme" \
+    ".config/hypr" \
+    ".config/omarchy" \
+    ".config/nixarchy" \
+    ".config/alacritty" \
+    ".config/ghostty" \
+    ".config/foot" \
+    ".config/kitty" \
+    ".config/btop" \
+    ".config/imv" \
+    ".config/fcitx5" \
+    ".config/wireplumber" \
+    ".config/autostart" \
+    ".config/hyprland-preview-share-picker" \
+    ".local/share/omarchy" \
+    ".local/state/omarchy" \
     ".config/monitors.xml" \
     ".config/xsettingsd" \
     ".local/share/icons" \

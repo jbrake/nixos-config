@@ -245,3 +245,51 @@ sudo ./scripts/restore-gnome-home.sh --apply
 
 The restore script keeps the fresh repository and copies personal and selected
 application data without bulk-copying `.config` or `.local/share`.
+
+## Intel Plasma unstable retest (September 6, 2026)
+
+The full unstable package set at `c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0`
+(Plasma 6.7.4, kernel 7.2.3; generation 64) still showed poor desktop
+responsiveness in Jason's hardware test. He returned to stable generation 63
+(Plasma 6.6.6), and the flake inputs were restored to NixOS 26.05. Keep stable
+as the normal laptop package set; this retest does not identify the specific
+component responsible or establish how Hyprland performs on the laptop.
+
+On September 7, the Nixarchy laptop trial generation 66 was removed and stable
+generation 65 was selected as the boot default. The normal rebuild/update target
+is `framework-intel-core-ultra` (Plasma 6.6.6 on NixOS 26.05); Nixarchy remains
+an explicitly selected experimental profile. Keep `nixpkgs` on `nixos-26.05`
+and Home Manager on `release-26.05` when updating inputs.
+
+## Nixarchy laptop trial
+
+The Intel laptop also exposes `framework-intel-core-ultra-nixarchy`. It uses
+Nixarchy's pinned unstable Nixpkgs and Home Manager, matching the working VM.
+The ordinary Plasma profile and other desktop profiles remain on stable 26.05.
+Hardware configuration, backups, applications and Podman are shared modules;
+there are no desktop-package backports or local patches to Nixarchy.
+
+```bash
+sudo ./scripts/switch-desktop.sh nixarchy --backup
+# Reboot when ready. To return afterwards:
+sudo ./scripts/switch-desktop.sh plasma
+```
+
+The Nixarchy session is selected by default. `Super + Space` opens its menu;
+`Super + K` shows shortcuts. Terminal, Hyprland, Omarchy theme and shell state
+are isolated with the desktop, alongside the existing GTK, Qt and keyring
+state. Home Manager seeds the desktop; Arch's first-login provisioning is
+marked complete so it cannot rewrite shared application defaults or XDG paths.
+
+Install, Remove and system-update menu actions are hidden on the laptop because
+they select a rebuild target by hostname, which would select stable Plasma in
+this flake. Declare packages here and use `scripts/rebuild.sh` to apply them.
+Themes and other desktop settings remain interactive. Nixarchy itself is pinned
+to an explicit commit; change its input URL deliberately to update it.
+
+Before the first trial, install a fresh stable boot generation from this tree,
+then schedule Nixarchy. That stable fallback contains the updated state-restoration
+code and can restore Plasma after a Nixarchy boot. For recovery, select that
+fresh stable generation, rather than an older generation whose state service
+does not recognize the new desktop. No live desktop change or automatic reboot
+is needed to prepare these two boot entries.

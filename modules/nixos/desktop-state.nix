@@ -28,6 +28,7 @@ in
         "cinnamon"
         "cosmic"
         "hyprland"
+        "nixarchy"
       ];
       message = "Unsupported laptop desktop state capsule: ${desktop}";
     }

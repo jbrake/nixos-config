@@ -11,7 +11,7 @@ reboot=false
 
 usage() {
   cat <<EOF
-Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland> [--backup] [--reboot]
+Usage: sudo $0 <plasma|gnome|cinnamon|cosmic|hyprland|nixarchy> [--backup] [--reboot]
 
   --backup  Wait for a Restic home backup before scheduling the switch.
   --reboot  Reboot immediately after the target system builds.
@@ -51,9 +51,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$target" in
-  plasma | gnome | cinnamon | cosmic | hyprland) ;;
+  plasma | gnome | cinnamon | cosmic | hyprland | nixarchy) ;;
   *)
-    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', or 'hyprland'." >&2
+    echo "Desktop must be 'plasma', 'gnome', 'cinnamon', 'cosmic', 'hyprland', or 'nixarchy'." >&2
     exit 1
     ;;
 esac
@@ -111,10 +111,8 @@ case "$current_profile" in
     current_state="hyprland"
     ;;
   "$host-nixarchy")
-    # Migration path for systems activated before Nixarchy was removed from
-    # this flake. It is a source profile only and can no longer be targeted.
     current="nixarchy"
-    current_state="plasma"
+    current_state="nixarchy"
     ;;
   *)
     echo "Unsupported active profile: $current_profile" >&2
