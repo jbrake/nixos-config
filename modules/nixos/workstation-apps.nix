@@ -58,6 +58,7 @@ in
   };
 
   environment.systemPackages = with pkgs; [
+    android-studio
     vscode
     alacritty
     calibre

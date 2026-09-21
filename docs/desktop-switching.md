@@ -246,7 +246,24 @@ sudo ./scripts/restore-gnome-home.sh --apply
 The restore script keeps the fresh repository and copies personal and selected
 application data without bulk-copying `.config` or `.local/share`.
 
-## Intel Plasma unstable retest (September 6, 2026)
+## Intel Plasma unstable retests
+
+### September 11–14, 2026
+
+Generation 64 was responsive during a fresh hardware retest. KWin confirmed
+Plasma 6.7.4, Qt 6.11.2, Mesa 26.2.2, hardware rendering, and the same display
+settings as stable. This does not establish that the intermittent lag is fixed.
+The main Nixpkgs input temporarily tracked nixos-unstable, initially retaining
+generation 64's `c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0` revision, and Home
+Manager tracked master. A later update produced generation 66 with Plasma 6.7.5.
+
+After further testing, generation 65 remained the reliable baseline. On
+September 14 the normal laptop profile returned to `nixos-26.05` with Home
+Manager on `release-26.05`; the Framework host continues to select
+`linuxPackages_latest` from that stable package set. Keep full unstable desktop
+testing isolated to an experimental profile or boot generation.
+
+### September 6–7, 2026 (historical)
 
 The full unstable package set at `c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0`
 (Plasma 6.7.4, kernel 7.2.3; generation 64) still showed poor desktop
