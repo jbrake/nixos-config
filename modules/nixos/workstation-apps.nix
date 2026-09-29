@@ -75,6 +75,12 @@ in
     telegram-desktop
     tone3000
     vlc
-    obsidian
+    (obsidian.overrideAttrs (old: {
+      # Electron reports app_id md.obsidian.Obsidian; upstream desktop file says md.Obsidian
+      postInstall = (old.postInstall or "") + ''
+        substituteInPlace $out/share/applications/obsidian.desktop \
+          --replace-fail "StartupWMClass=md.Obsidian" "StartupWMClass=md.obsidian.Obsidian"
+      '';
+    }))
   ];
 }
