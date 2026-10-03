@@ -35,9 +35,9 @@ These are two separate safety layers:
 | Runs automatically during every completed desktop switch | Runs daily or when switching with `--backup` |
 | Saves desktop-sensitive settings | Saves nearly the entire home directory |
 | Keeps the latest state for each desktop | Keeps historical snapshots |
-| Stays on the laptop for quick switching | Is encrypted and stored on the NAS for recovery |
+| Stays on the laptop for quick switching | Is encrypted and stored on the USB backup disk for recovery |
 
-A normal switch does not contact the NAS. Restic does not control desktop
+A normal switch does not touch the backup disk. Restic does not control desktop
 switching; it also backs up the local capsules during the next home snapshot.
 
 ## First-Time Setup

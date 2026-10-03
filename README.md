@@ -102,7 +102,8 @@ Disposable VM profiles remain independent:
   settings from contaminating another.
 - Home Manager owns user tools and selected desktop settings. The retained AMD
   profile keeps its historical machine-specific Plasma panel IDs.
-- The hardware profiles define encrypted Restic backups to Jason's Synology NAS.
+- The hardware profiles define encrypted Restic backups to an external USB disk
+  (the Synology NAS target is retained, commented out).
 
 ```text
 flake.nix                              host constructors, outputs, checks
@@ -140,7 +141,7 @@ At minimum, review and replace the following:
 2. Define a host for your exact hardware. Generate your own
    `hardware-configuration.nix`; never reuse another machine's filesystem UUIDs.
 3. Disable `enableBackup` for your profiles until `modules/nixos/backup.nix`, the
-   NAS host key, repository path, account, and root-only secrets refer to your
+   backup disk UUID, repository path, and root-only password file refer to your
    own backup destination.
 4. Review the desktop, application, Tailscale, fingerprint, virtualization, and
    emulation modules and remove roles you do not want.
@@ -163,7 +164,7 @@ result of `nix flake show`.
 
 The procedures in this section are Jason's reinstall runbook. They intentionally
 assume user `jason`, this repository layout, the deployed Intel Framework, and
-the configured Synology backup environment.
+the configured USB backup disk.
 
 ### Graphical installer
 
@@ -278,8 +279,8 @@ sudo ./scripts/switch-desktop.sh hyprland
 
 Use the same command with `plasma` to return. Personal files and application
 profiles stay shared; desktop-sensitive state is saved automatically in a local
-capsule. Add `--backup` only when a fresh encrypted Restic snapshot on the NAS
-is also wanted. Normal rebuild and update commands retain the active profile.
+capsule. Add `--backup` only when a fresh encrypted Restic snapshot on the backup
+disk is also wanted. Normal rebuild and update commands retain the active profile.
 
 Update inputs, prove the new system builds, and switch only after success:
 
@@ -324,8 +325,8 @@ sudo systemctl start restic-backups-jason-home.service
 sudo restic-jason-home snapshots
 ```
 
-See [Restic Backup and Recovery](docs/backup-recovery.md) for coverage, NAS key
-bootstrap, one-off backups, selected-file restores, whole-home recovery, and the
+See [Restic Backup and Recovery](docs/backup-recovery.md) for coverage, the
+backup disk, switching back to the NAS, one-off backups, selected-file restores, whole-home recovery, and the
 fresh-install recovery workflow.
 
 ## Validation
@@ -365,7 +366,8 @@ and new system generations.
 
 The repository intentionally publishes hostnames, hardware details, filesystem
 UUIDs, package choices, a private-LAN NAS address, and a public SSH host key.
-Those values cannot authenticate to the NAS or decrypt the Restic repository.
+Those values, and the backup disk's filesystem UUID, cannot authenticate to the
+NAS or decrypt the Restic repository.
 
 Never commit private SSH keys, authentication tokens, browser profiles, VPN
 credentials, application state, or files under `/var/lib/secrets`. The pre-push

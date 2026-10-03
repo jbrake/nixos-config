@@ -12,10 +12,12 @@ let
   serviceName = "restic-backups-${jobName}";
   successServiceName = "restic-backup-success-${jobName}";
   failureServiceName = "restic-backup-failure-${jobName}";
+  # External USB Samsung 850 PRO (ext4, label "Backup").
+  diskMount = "/mnt/backup";
 in
 {
   options.jbrake.resticBackup = {
-    enable = lib.mkEnableOption "encrypted home backups to the Synology NAS";
+    enable = lib.mkEnableOption "encrypted home backups to the external USB backup disk";
 
     user = lib.mkOption {
       type = lib.types.str;
@@ -48,7 +50,7 @@ in
     sshKeyFile = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/secrets/restic-ssh-key";
-      description = "Root-readable SSH private key for the Synology SFTP account.";
+      description = "Root-readable SSH private key for the Synology SFTP account (NAS target only).";
     };
 
     exclude = lib.mkOption {
@@ -75,23 +77,50 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Public host identity captured directly from the NAS. Keeping this in Git
-    # lets unattended backups verify that they reached the expected server.
-    programs.ssh.knownHosts.synology-restic = {
-      hostNames = [ cfg.nasHost ];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOH23DBozgUWp/8NRyvCIC6THkhI/wV6QuY7Hp5LL8Ra";
+    # NAS target disabled in favour of the external USB disk below. Uncomment
+    # this, the NAS repository, and extraOptions to switch back.
+    #
+    # # Public host identity captured directly from the NAS. Keeping this in Git
+    # # lets unattended backups verify that they reached the expected server.
+    # programs.ssh.knownHosts.synology-restic = {
+    #   hostNames = [ cfg.nasHost ];
+    #   publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOH23DBozgUWp/8NRyvCIC6THkhI/wV6QuY7Hp5LL8Ra";
+    # };
+
+    # Automount rather than a plain mount so that, when the disk is unplugged,
+    # restic fails against the autofs mount point instead of initializing a
+    # fresh repository on the root filesystem. The idle timeout unmounts the
+    # disk after a backup so it is safe to unplug.
+    fileSystems.${diskMount} = {
+      device = "/dev/disk/by-uuid/c93b20f8-c021-48b7-8942-da505215827f";
+      fsType = "ext4";
+      options = [
+        "noauto"
+        "nofail"
+        # Lets the desktop mount it from the Devices panel without an admin
+        # prompt. Implies noexec,nosuid,nodev, which suits a data disk.
+        "users"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=5min"
+        "x-systemd.device-timeout=10s"
+      ];
     };
+
+    # /mnt was created root-only (0700), which hid the mount point from the
+    # user entirely. The repository inside stays root-owned and encrypted.
+    systemd.tmpfiles.rules = [ "d /mnt 0755 root root -" ];
 
     services.restic.backups.${jobName} = {
       initialize = true;
-      repository = "sftp:${cfg.nasUser}@${cfg.nasHost}:/${cfg.nasShare}";
+      # repository = "sftp:${cfg.nasUser}@${cfg.nasHost}:/${cfg.nasShare}";
+      repository = "${diskMount}/restic-${cfg.user}";
       inherit (cfg) passwordFile;
       paths = [ "/home/${cfg.user}" ];
       inherit (cfg) exclude;
 
-      extraOptions = [
-        "sftp.command='ssh ${cfg.nasUser}@${cfg.nasHost} -i ${cfg.sshKeyFile} -o IdentitiesOnly=yes -s sftp'"
-      ];
+      # extraOptions = [
+      #   "sftp.command='ssh ${cfg.nasUser}@${cfg.nasHost} -i ${cfg.sshKeyFile} -o IdentitiesOnly=yes -s sftp'"
+      # ];
       extraBackupArgs = [ "--exclude-caches" ];
 
       timerConfig = {
@@ -122,11 +151,10 @@ in
       onSuccess = [ "${successServiceName}.service" ];
       onFailure = [ "${failureServiceName}.service" ];
 
-      # network-online.target only describes the boot-time network state.  In
-      # particular, it can already be active while Wi-Fi is still reconnecting
-      # after resume.  Retry transient failures long enough for the network and
-      # NAS to become reachable, but stop after roughly two hours so a laptop
-      # away from home does not retry forever.  RestartMode=direct suppresses
+      # Retry transient failures, such as the backup disk not being plugged in
+      # yet (or, with the NAS target, Wi-Fi still reconnecting after resume),
+      # but stop after roughly two hours so an absent target is not retried
+      # forever.  RestartMode=direct suppresses
       # OnFailure notifications for the intermediate attempts; the notification
       # above is sent if the retry limit is ultimately exhausted.
       startLimitIntervalSec = 3 * 60 * 60;
